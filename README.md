@@ -1,67 +1,69 @@
 # n_nubs terminal | All-in-One Solana Platform
 
-A comprehensive command center for Solana development, trading, and community engagement.
+A modern, feature-rich command center for Solana development, trading, and community engagement.
 
 ## 🚀 Current Features
 
 ### 💻 Interface
-- Fully responsive modern UI with dark mode
-- Resizable panels for customizable workspace
-- Keyboard shortcuts (Press `Shift + ?` to view)
-- Floating windows system
+- Modern, responsive UI with dark/light mode toggle
+- Resizable panels with drag-and-drop functionality
+- Keyboard shortcuts (Press `Ctrl + ?` or `Ctrl + /` to view)
+- Customizable workspace layout
+- GM Streak counter for daily engagement
 
 ### 📊 Trading & Charts
-- Real-time crypto price chart display
-- Multiple timeframe support
-- Basic technical indicators
+- Multi-tab chart interface with drag-and-drop organization
+- Support for multiple trading pairs
+- Customizable timeframes (Live to 1D)
+- MemeScope+ for tracking viral tokens
+- DEX and CEX search capabilities
+- Personal watchlist management
 
 ### 🤖 AI Integration
-- AI Chat Panel (Coming Soon)
-- Trading Assistant Interface
-- Command Center Layout
-
-### 💬 Social Hub
-- Twitter/X Feed Integration
-- Public Chat Room Interface
-- Private Messaging Layout
-- Swap Interface Preview
-
-### ⚡ Utilities
-- Built-in Calculator (`Alt + C`)
-- Media Player (`Alt + M`)
-- Daily Journal/Calendar (`Alt + D`)
-- System Status Monitoring
-- Real-time Clock
-
-## 🔮 Coming Soon
-
-### 🤖 AI Features
-- Smart Contract Analysis
-- Market Sentiment Analysis
-- Code Generation
-- Trading Strategy Suggestions
-- Price Prediction Models
-
-### 📈 Trading Features
-- Jupiter DEX Integration
-- Token Swaps
-- Portfolio Tracking
-- Price Alerts
-- Order Book Visualization
+- AI-powered chat interface
+- Smart command processing
+- Context-aware responses
+- Code generation assistance
 
 ### 💬 Social Features
-- Live Chat Rooms
-- Private Messaging
-- Community Forums
-- Project Announcements
-- Market Sentiment Feed
+- Public chat with message reactions
+- Reply and forward functionality
+- Social media feed integration
+- Community engagement tools
+
+### ⚡ Utilities
+- Real-time clock with timezone support
+- System status monitoring
+- Quick action buttons
+- Settings management
+
+## 🔮 Upcoming Features
+
+### 🤖 AI Enhancements
+- Smart contract analysis
+- Market sentiment analysis
+- Trading strategy suggestions
+- Price prediction models
+
+### 📈 Trading Features
+- Jupiter DEX integration
+- Live order book visualization
+- Portfolio tracking
+- Price alerts
+- Advanced technical indicators
+
+### 💬 Social Expansion
+- Private messaging system
+- Community forums
+- Project announcements
+- Market sentiment feed
 
 ### 🛠️ Developer Tools
-- Smart Contract Templates
-- Code Snippets Library
-- Testing Framework
-- Gas Fee Optimizer
-- Network Statistics
+- Smart contract templates
+- Code snippets library
+- Testing framework
+- Gas fee optimizer
+- Network statistics
 
 ## 🚀 Quick Start
 
@@ -85,6 +87,7 @@ npm run dev
 - shadcn/ui
 - Solana Web3.js
 - Lucide Icons
+- DND Kit for drag-and-drop
 
 ## 🤝 Contributing
 
