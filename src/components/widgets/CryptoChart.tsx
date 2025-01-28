@@ -7,8 +7,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Activity, Plus, TrendingUp, X, Command, Keyboard, MousePointerClick, Rocket, Search, Star, Sparkles, LineChart, List, GripHorizontal } from "lucide-react";
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect, useRef } from "react";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -33,13 +33,14 @@ import {
   horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { type VariantProps } from "class-variance-authority";
 
 interface ChartTab {
   id: string;
   title: string;
   pair: string;
-  type: 'welcome' | 'chart';
-  mode: 'memescope' | 'trending' | 'dex' | 'cex' | 'custom' | 'watchlist' | null;
+  type: 'welcome' | 'chart' | 'google-search';
+  mode: 'memescope' | 'trending' | 'dex' | 'cex' | 'custom' | 'watchlist' | 'google-search' | null;
 }
 
 const TRADING_PAIRS = [
@@ -105,10 +106,26 @@ function SortableTab({ tab, active, onActivate, onClose }: SortableTabProps) {
   );
 }
 
+// Add type declaration for Google Search
+declare global {
+  interface Window {
+    google?: {
+      search?: {
+        cse?: {
+          element?: {
+            render: (options: { div: HTMLElement; tag: string }) => void;
+          };
+        };
+      };
+    };
+  }
+}
+
 export function CryptoChart() {
   const [tabs, setTabs] = useState<ChartTab[]>([]);
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [isNewTabDialogOpen, setIsNewTabDialogOpen] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -132,20 +149,46 @@ export function CryptoChart() {
     }
   }, []);
 
-  const createNewTab = (mode: ChartTab['mode']) => {
+  // Get current tab
+  const currentTab = tabs.find((tab) => tab.id === activeTab);
+
+  // Effect to initialize Google Search when tab becomes active
+  useEffect(() => {
+    if (currentTab?.type === 'google-search' && searchContainerRef.current) {
+      // Clear previous content
+      searchContainerRef.current.innerHTML = '';
+      // Create new search element
+      const searchDiv = document.createElement('div');
+      searchDiv.className = 'gcse-search';
+      searchContainerRef.current.appendChild(searchDiv);
+      
+      // Reinitialize Google Search
+      if (window.google?.search?.cse?.element?.render) {
+        window.google.search.cse.element.render({
+          div: searchDiv,
+          tag: 'search'
+        });
+      }
+    }
+  }, [currentTab?.type]);
+
+  const createNewTab = (mode: ChartTab['mode']): ChartTab => {
     const randomPair = TRADING_PAIRS[Math.floor(Math.random() * TRADING_PAIRS.length)];
     const title = mode === 'memescope' ? 'MemeScope+' :
                  mode === 'trending' ? 'Trending' :
                  mode === 'dex' ? 'DEX Search' :
                  mode === 'cex' ? 'CEX Search' :
                  mode === 'custom' ? 'Custom Chart' :
-                 mode === 'watchlist' ? 'My Watchlist' : randomPair;
+                 mode === 'watchlist' ? 'My Watchlist' :
+                 mode === 'google-search' ? 'Google Search' : randomPair;
+    
+    const type = mode === 'google-search' ? ('google-search' as const) : ('chart' as const);
     
     return {
       id: crypto.randomUUID(),
       title,
       pair: randomPair,
-      type: 'chart' as const,
+      type,
       mode,
     };
   };
@@ -188,8 +231,6 @@ export function CryptoChart() {
   if (!activeTab) {
     return null; // Or a loading state
   }
-
-  const currentTab = tabs.find((tab) => tab.id === activeTab);
 
   return (
     <Card className="w-full h-full flex flex-col">
@@ -236,6 +277,7 @@ export function CryptoChart() {
           <div className="grid grid-cols-2 gap-6 py-6">
             <Button
               variant="outline"
+              size="default"
               className="h-auto min-h-[200px] w-full p-6 flex flex-col items-center relative bg-card hover:bg-card/80"
               onClick={() => addNewTab('memescope')}
             >
@@ -324,6 +366,21 @@ export function CryptoChart() {
                 </p>
               </div>
             </Button>
+            <Button
+              variant="outline"
+              className="h-auto min-h-[200px] w-full p-6 flex flex-col items-center relative bg-card hover:bg-card/80"
+              onClick={() => addNewTab('google-search')}
+            >
+              <Search className="h-16 w-16 text-primary" />
+              <h3 className="font-semibold text-xl mt-4">Google Search</h3>
+              <div className="mt-2">
+                <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
+                  Search the web<br />
+                  directly from your<br />
+                  terminal
+                </p>
+              </div>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -367,6 +424,10 @@ export function CryptoChart() {
               <Plus className="h-4 w-4 mr-2" />
               Open Your First Chart
             </Button>
+          </div>
+        ) : currentTab?.type === 'google-search' ? (
+          <div className="w-full h-full flex flex-col bg-white dark:bg-background p-4 rounded-lg overflow-auto">
+            <div ref={searchContainerRef} className="w-full h-full min-h-[600px]"></div>
           </div>
         ) : (
           <>
