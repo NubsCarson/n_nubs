@@ -1,113 +1,104 @@
-# n_nubs terminal
+# n_nubs terminal | All-in-One Solana Platform
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=flat&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![React](https://img.shields.io/badge/react-%2320232a.svg?style=flat&logo=react&logoColor=%2361DAFB)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Solana](https://img.shields.io/badge/Solana-black?style=flat&logo=solana&logoColor=14F195)](https://solana.com)
-[![Twitter](https://img.shields.io/badge/@n__nubsDEV-%231DA1F2.svg?style=flat&logo=Twitter&logoColor=white)](https://twitter.com/n_nubsDEV)
+A comprehensive command center for Solana development, trading, and community engagement.
 
-Your all-in-one Solana command center for trading, development, and social engagement. A modern platform that combines advanced trading tools, development utilities, and social feeds in one seamless interface.
+## 🚀 Current Features
 
-<div align="center">
-  <h3>
-    <a href="https://github.com/NubsCarson/n_nubs">
-      View Demo
-    </a>
-    <span> | </span>
-    <a href="https://twitter.com/n_nubsDEV">
-      Twitter
-    </a>
-    <span> | </span>
-    <a href="https://github.com/NubsCarson/n_nubs/issues">
-      Report Bug
-    </a>
-  </h3>
-</div>
+### 💻 Interface
+- Fully responsive modern UI with dark mode
+- Resizable panels for customizable workspace
+- Keyboard shortcuts (Press `Shift + ?` to view)
+- Floating windows system
 
-## Core Features
+### 📊 Trading & Charts
+- Real-time crypto price chart display
+- Multiple timeframe support
+- Basic technical indicators
 
-### Trading & DeFi
-- Real-time token charts and market analysis
-- DEX aggregator for best swap rates
-- Token swapping interface
-- Portfolio tracking and management
-- Price alerts and notifications
+### 🤖 AI Integration
+- AI Chat Panel (Coming Soon)
+- Trading Assistant Interface
+- Command Center Layout
 
-### Development Tools
-- Integrated terminal with Solana CLI support
-- Smart contract deployment interface
-- Program monitoring and debugging
-- Transaction explorer
-- Network status monitoring
+### 💬 Social Hub
+- Twitter/X Feed Integration
+- Public Chat Room Interface
+- Private Messaging Layout
+- Swap Interface Preview
 
-### AI Integration
-- AI trading assistant
-- Smart contract analysis bot
-- Code generation and auditing
-- Automated trading agents
-- Market sentiment analysis
+### ⚡ Utilities
+- Built-in Calculator (`Alt + C`)
+- Media Player (`Alt + M`)
+- Daily Journal/Calendar (`Alt + D`)
+- System Status Monitoring
+- Real-time Clock
 
-### Social Hub
-- Multi-platform feed aggregation (Twitter, Discord, Telegram)
-- Crypto news integration
-- Community chat rooms
-- Project announcements tracking
-- Market sentiment feeds
+## 🔮 Coming Soon
 
-### Analytics
-- Real-time market data
-- Trading volume analysis
-- Network statistics
-- Gas fee tracking
-- TVL monitoring
+### 🤖 AI Features
+- Smart Contract Analysis
+- Market Sentiment Analysis
+- Code Generation
+- Trading Strategy Suggestions
+- Price Prediction Models
 
-## Technologies Used
+### 📈 Trading Features
+- Jupiter DEX Integration
+- Token Swaps
+- Portfolio Tracking
+- Price Alerts
+- Order Book Visualization
 
-Built with modern web technologies:
-- Vite + React for lightning-fast performance
-- TypeScript for type safety
-- shadcn/ui for sleek UI components
-- Tailwind CSS for styling
-- Solana Web3.js for blockchain integration
+### 💬 Social Features
+- Live Chat Rooms
+- Private Messaging
+- Community Forums
+- Project Announcements
+- Market Sentiment Feed
 
-## Getting Started
+### 🛠️ Developer Tools
+- Smart Contract Templates
+- Code Snippets Library
+- Testing Framework
+- Gas Fee Optimizer
+- Network Statistics
 
-Requirements:
-- Node.js & npm - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-- Solana CLI tools (optional)
+## 🚀 Quick Start
 
-```sh
-# Clone and setup
+```bash
+# Clone the repository
 git clone https://github.com/NubsCarson/n_nubs.git
 cd n_nubs
 
 # Install dependencies
-npm i
+npm install
 
 # Start development server
 npm run dev
 ```
 
-## Architecture
+## 🔧 Tech Stack
 
-The platform is built with a modular architecture allowing for:
-- Real-time data streaming
-- Concurrent AI agent operations
-- Seamless integration with Solana's ecosystem
-- Extensible widget system
-- Cross-platform compatibility
+- React + Vite
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+- Solana Web3.js
+- Lucide Icons
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md).
 
-## License
+## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Licensed under the [MIT License](LICENSE).
 
-## Contact
+## 🔗 Links
 
-n_nubs - [@n_nubsDEV](https://twitter.com/n_nubsDEV)
+- [GitHub Repository](https://github.com/NubsCarson/n_nubs)
+- [Twitter/X](https://twitter.com/n_nubsDEV)
 
-Project Link: [https://github.com/NubsCarson/n_nubs](https://github.com/NubsCarson/n_nubs)
+## 📞 Contact
+
+For questions or support, reach out on [Twitter/X](https://twitter.com/n_nubsDEV).
