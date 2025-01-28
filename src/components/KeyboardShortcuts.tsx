@@ -19,7 +19,7 @@ const shortcutSections: ShortcutSection[] = [
     shortcuts: [
       { keys: ["s"], description: "Focus search" },
       { keys: ["g", "h"], description: "Go to Home" },
-      { keys: ["?"], description: "Show/hide this dialog" },
+      { keys: ["ctrl", "?"], description: "Show/hide this dialog" },
       { keys: ["esc"], description: "Close dialog" },
     ],
   },

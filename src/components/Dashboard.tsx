@@ -12,17 +12,31 @@ import { ResizablePanel } from "./ui/ResizablePanel";
 import { ScrollArea } from "./ui/ScrollArea";
 import { useEffect, useState } from "react";
 import { GripVertical, Hand, Terminal, Activity, Cloud, Signal, BarChart2 } from "lucide-react";
+import { GMStreak } from "./widgets/GMStreak";
+import { LeftPanelFooter } from "./widgets/LeftPanelFooter";
 
 const Dashboard = () => {
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
   const [showMediaPlayer, setShowMediaPlayer] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check if user has a theme preference in localStorage
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+
+  useEffect(() => {
+    // Apply theme class to document
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    // Save theme preference
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Check for Shift + / (which is ?)
-      if (event.shiftKey && event.key === "?") {
+      // Check for Ctrl + ? or Ctrl + /
+      if (event.ctrlKey && (event.key === "?" || event.key === "/")) {
         event.preventDefault();
         setShowKeyboardShortcuts((prev) => !prev);
         return;
@@ -51,44 +65,56 @@ const Dashboard = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  const handleSettingsClick = () => {
+    setShowKeyboardShortcuts(true);
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Left Panel - Social Media */}
       <ResizablePanel
         defaultSize={250}
-        minSize={200}
+        minSize={260}
         maxSize={400}
         side="left"
         className="border-r border-border bg-card"
       >
         <div className="h-full flex flex-col">
-          <div className="p-4 flex-shrink-0 border-b border-border space-y-2">
+          <div className="p-6 flex-shrink-0 border-b border-border space-y-4">
             <a 
               href="https://x.com/n_nubsDEV" 
               target="_blank" 
               rel="noopener noreferrer"
               className="block hover:opacity-80 transition-opacity"
             >
-              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#9945FF] to-[#14F195] tracking-tight flex items-center gap-2">
+              <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#9945FF] to-[#14F195] tracking-tight flex items-center gap-3">
                 n_nubs
-                <Hand className="h-5 w-5 text-[#14F195] animate-wave" />
+                <Hand className="h-8 w-8 text-[#14F195] animate-wave" />
               </h2>
             </a>
-            <a 
-              href="https://x.com/n_nubsDEV" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Terminal className="h-4 w-4" />
-              <span>terminal</span>
-            </a>
+            <div className="space-y-3">
+              <a 
+                href="https://x.com/n_nubsDEV" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-base text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Terminal className="h-5 w-5" />
+                <span>terminal</span>
+              </a>
+              <GMStreak />
+            </div>
           </div>
           <ScrollArea className="flex-1">
             <div className="p-4">
               <SocialFeeds />
             </div>
           </ScrollArea>
+          <LeftPanelFooter 
+            onSettingsClick={handleSettingsClick}
+            onThemeToggle={() => setIsDarkMode(!isDarkMode)}
+            isDarkMode={isDarkMode}
+          />
         </div>
       </ResizablePanel>
 
