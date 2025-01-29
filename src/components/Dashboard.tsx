@@ -42,20 +42,20 @@ const Dashboard = () => {
         return;
       }
 
-      // Handle other keyboard shortcuts
-      if (event.altKey) {
+      // Handle widget shortcuts
+      if (event.ctrlKey) {
         switch (event.key.toLowerCase()) {
-          case "c":
+          case "y":
             event.preventDefault();
-            setShowCalculator((prev) => !prev);
+            setShowCalendar((prev) => !prev);
             break;
           case "m":
             event.preventDefault();
             setShowMediaPlayer((prev) => !prev);
             break;
-          case "d":
+          case "c":
             event.preventDefault();
-            setShowCalendar((prev) => !prev);
+            setShowCalculator((prev) => !prev);
             break;
         }
       }

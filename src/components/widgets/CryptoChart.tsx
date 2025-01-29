@@ -465,6 +465,39 @@ export function CryptoChart() {
     }
   }, []);
 
+  // Add this effect after the initial welcome tab effect
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Navigation shortcuts
+      if (event.ctrlKey) {
+        switch (event.key) {
+          case 'ArrowLeft':
+            event.preventDefault();
+            if (activeTab > 0) {
+              handleTabChange(Math.max(0, activeTab - 1));
+            }
+            break;
+          case 'ArrowRight':
+            event.preventDefault();
+            if (activeTab < tabs.length - 1) {
+              handleTabChange(Math.min(tabs.length - 1, activeTab + 1));
+            }
+            break;
+          case 'h':
+            event.preventDefault();
+            const homeTabIndex = tabs.findIndex(tab => tab.type === 'welcome');
+            if (homeTabIndex >= 0) {
+              handleTabChange(homeTabIndex);
+            }
+            break;
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTab, tabs, handleTabChange]);
+
   return (
     <Card className="w-full h-full flex flex-col">
       {/* Tab Bar */}
@@ -753,21 +786,21 @@ export function CryptoChart() {
                 <MousePointerClick className="h-8 w-8 text-primary" />
                 <h2 className="text-lg font-semibold">Getting Started</h2>
                 <p className="text-sm text-muted-foreground">
-                  Click the + button in the top right to open a new chart. Each tab can track a different trading pair.
+                  Click the + button in the top right to open a new tab. Each tab can be customized for different purposes.
                 </p>
               </Card>
               <Card className="p-6 flex flex-col gap-3 items-center">
                 <Command className="h-8 w-8 text-primary" />
-                <h2 className="text-lg font-semibold">Quick Actions</h2>
+                <h2 className="text-lg font-semibold">Navigation</h2>
                 <p className="text-sm text-muted-foreground">
-                  Use the dropdown menus to change trading pairs, timeframes, and metrics for each chart.
+                  Use the navigation buttons or drag tabs to rearrange them. Click the home icon to return to this screen.
                 </p>
               </Card>
               <Card className="p-6 flex flex-col gap-3 items-center">
-                <Keyboard className="h-8 w-8 text-primary" />
-                <h2 className="text-lg font-semibold">Keyboard Shortcuts</h2>
+                <Search className="h-8 w-8 text-primary" />
+                <h2 className="text-lg font-semibold">Quick Search</h2>
                 <p className="text-sm text-muted-foreground">
-                  Press CTRL + ? anywhere in the terminal to view all available keyboard shortcuts.
+                  Use the search bar at the top to search the web. Press Enter to search in a new tab.
                 </p>
               </Card>
               <Card className="p-6 flex flex-col gap-3 items-center">

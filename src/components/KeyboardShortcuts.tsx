@@ -15,39 +15,34 @@ interface ShortcutSection {
 
 const shortcutSections: ShortcutSection[] = [
   {
-    title: "Site wide shortcuts",
+    title: "General Shortcuts",
     shortcuts: [
-      { keys: ["s"], description: "Focus search" },
-      { keys: ["g", "h"], description: "Go to Home" },
       { keys: ["ctrl", "?"], description: "Show/hide this dialog" },
-      { keys: ["esc"], description: "Close dialog" },
-    ],
-  },
-  {
-    title: "Windows",
-    shortcuts: [
-      { keys: ["alt", "c"], description: "Toggle Calculator" },
-      { keys: ["alt", "m"], description: "Toggle Media Player" },
-      { keys: ["alt", "d"], description: "Toggle Calendar" },
-      { keys: ["esc"], description: "Close active window" },
-    ],
-  },
-  {
-    title: "Chat",
-    shortcuts: [
-      { keys: ["ctrl", "enter"], description: "Send message" },
-      { keys: ["↑"], description: "Edit last message" },
-      { keys: ["alt", "n"], description: "New chat" },
+      { keys: ["esc"], description: "Close dialog" }
     ],
   },
   {
     title: "Navigation",
     shortcuts: [
-      { keys: ["g", "s"], description: "Go to Social" },
-      { keys: ["g", "c"], description: "Go to Chat" },
-      { keys: ["g", "m"], description: "Go to Media Player" },
+      { keys: ["ctrl", "←"], description: "Previous tab" },
+      { keys: ["ctrl", "→"], description: "Next tab" },
+      { keys: ["ctrl", "h"], description: "Go to welcome tab" }
     ],
   },
+  {
+    title: "Search",
+    shortcuts: [
+      { keys: ["enter"], description: "Perform search in new tab" }
+    ],
+  },
+  {
+    title: "Widget Shortcuts",
+    shortcuts: [
+      { keys: ["ctrl", "y"], description: "Toggle Calendar Calculator" },
+      { keys: ["ctrl", "m"], description: "Toggle Media Player" },
+      { keys: ["ctrl", "c"], description: "Toggle Calculator" }
+    ],
+  }
 ];
 
 interface Props {
