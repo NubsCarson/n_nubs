@@ -112,41 +112,73 @@
   background: transparent !important;
 }
 
-.gsc-search-box {
-  margin-bottom: 16px !important;
+.gsc-result {
+  border-bottom: 1px solid hsl(var(--border)) !important;
+  padding: 1rem 0 !important;
 }
 
-.gsc-input-box {
-  border-radius: 6px !important;
-  border: 1px solid hsl(var(--border)) !important;
+.gs-title {
+  color: hsl(var(--primary)) !important;
+  text-decoration: none !important;
+  font-size: 1.1rem !important;
 }
 
-.gsc-search-button-v2 {
-  border-radius: 6px !important;
-  padding: 8px 16px !important;
-  margin-left: 8px !important;
+.gs-title:hover {
+  text-decoration: underline !important;
 }
 
-.gcsc-find-more-on-google {
+.gs-snippet {
+  color: hsl(var(--foreground)) !important;
+  font-size: 0.9rem !important;
+  line-height: 1.5 !important;
+}
+
+.gsc-url-top {
+  color: hsl(var(--muted-foreground)) !important;
+  font-size: 0.8rem !important;
+}
+
+.gsc-result-info {
+  color: hsl(var(--muted-foreground)) !important;
+  font-size: 0.9rem !important;
+  padding: 0 !important;
+  margin: 0 0 1rem 0 !important;
+}
+
+.gsc-results {
+  width: 100% !important;
+}
+
+.gsc-result-info-container {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.gcsc-more-maybe-branding-root {
   display: none !important;
 }
 
 /* Dark mode adjustments */
-.dark .gsc-control-cse {
-  background: transparent !important;
+.dark .gs-title {
+  color: hsl(var(--primary)) !important;
 }
 
-.dark .gsc-result-info,
-.dark .gs-title,
 .dark .gs-snippet {
   color: hsl(var(--foreground)) !important;
 }
 
-.dark .gsc-input-box {
-  background: hsl(var(--background)) !important;
+.dark .gsc-url-top {
+  color: hsl(var(--muted-foreground)) !important;
 }
 
-.dark .gsc-input {
-  color: hsl(var(--foreground)) !important;
+.dark .gsc-result-info {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.dark .gsc-results {
+  background: transparent !important;
+}
+
+.dark .gsc-result {
   background: transparent !important;
 }

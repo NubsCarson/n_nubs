@@ -6,8 +6,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Activity, Plus, TrendingUp, X, Command, Keyboard, MousePointerClick, Rocket, Search, Star, Sparkles, LineChart, List, GripHorizontal } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { Activity, Plus, TrendingUp, X, Command, Keyboard, MousePointerClick, Rocket, Search, Star, Sparkles, LineChart, List, GripHorizontal, AlertTriangle, ChevronLeft, ChevronRight, Home, Code, Newspaper } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -34,13 +34,16 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { type VariantProps } from "class-variance-authority";
+import { v4 as uuidv4 } from 'uuid';
 
 interface ChartTab {
   id: string;
   title: string;
   pair: string;
-  type: 'welcome' | 'chart' | 'google-search';
-  mode: 'memescope' | 'trending' | 'dex' | 'cex' | 'custom' | 'watchlist' | 'google-search' | null;
+  type: 'welcome' | 'chart' | 'google-search' | 'iframe-search' | 'my-home' | 'test';
+  mode: 'memescope' | 'trending' | 'dex' | 'cex' | 'custom' | 'watchlist' | 'google-search' | 'iframe-search' | 'my-home' | 'test' | null;
+  url?: string;
+  nonEmbeddableUrl?: string;
 }
 
 const TRADING_PAIRS = [
@@ -121,10 +124,172 @@ declare global {
   }
 }
 
+interface SearchResult {
+  title: string;
+  link: string;
+  snippet: string;
+  htmlTitle: string;
+  htmlSnippet: string;
+  displayLink: string;
+}
+
+interface SearchResponse {
+  items?: SearchResult[];
+  searchInformation?: {
+    totalResults: string;
+    searchTime: number;
+  };
+  error?: {
+    message: string;
+  };
+}
+
+// Add list of known non-embeddable domains
+const NON_EMBEDDABLE_DOMAINS = [
+  'twitter.com',
+  'facebook.com',
+  'instagram.com',
+  'linkedin.com',
+  'google.com',
+  'youtube.com'
+];
+
+// Add this interface above the component
+interface IframeContainerProps {
+  tab: ChartTab;
+  isActive: boolean;
+}
+
+// Add this component above the main CryptoChart component
+function IframeContainer({ tab, isActive }: IframeContainerProps) {
+  const iframeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!iframeRef.current || !tab.url) return;
+    
+    // Only create iframe if it doesn't exist
+    if (!iframeRef.current.firstChild) {
+      const iframe = document.createElement('iframe');
+      iframe.src = tab.url;
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+      iframeRef.current.appendChild(iframe);
+    }
+  }, [tab.url]);
+
+  return (
+    <div 
+      ref={iframeRef}
+      className="w-full h-full"
+      style={{
+        display: isActive ? 'block' : 'none',
+        position: 'relative',
+        minHeight: '100%'
+      }}
+    />
+  );
+}
+
+// Add interface for the component props
+interface IframeLinkDirectoryProps {
+  createNewTab: (mode: ChartTab['mode']) => ChartTab;
+  checkIframeCompatibility: (url: string) => Promise<boolean>;
+  setTabs: React.Dispatch<React.SetStateAction<ChartTab[]>>;
+  handleTabChange: (index: number) => void;
+  tabs: ChartTab[];
+}
+
+// Update the component to use props
+function IframeLinkDirectory({ 
+  createNewTab, 
+  checkIframeCompatibility, 
+  setTabs, 
+  handleTabChange, 
+  tabs 
+}: IframeLinkDirectoryProps) {
+  const categories = [
+    {
+      title: "General Use Sites",
+      icon: <Home className="h-6 w-6" />,
+      items: [
+        { name: "Wiby.me", url: "https://wiby.me" },
+        { name: "OpenStreetMap", url: "https://www.openstreetmap.org/export/embed.html" },
+        { name: "Archive.org Today", url: "https://web.archive.org/web/today/" }
+      ]
+    },
+    {
+      title: "Developer Tools",
+      icon: <Code className="h-6 w-6" />,
+      items: [
+        { name: "JSFiddle", url: "https://jsfiddle.net/" },
+        { name: "CodeSandbox", url: "https://codesandbox.io/s/" },
+        { name: "Replit", url: "https://replit.com/" },
+        { name: "StackBlitz", url: "https://stackblitz.com/" },
+        { name: "DevDocs", url: "https://devdocs.io/" }
+      ]
+    }
+  ];
+
+  const openInNewTab = useCallback(async (url: string) => {
+    const newTab = createNewTab('iframe-search');
+    const isEmbeddable = await checkIframeCompatibility(url);
+    
+    if (isEmbeddable) {
+      newTab.url = url;
+    } else {
+      newTab.nonEmbeddableUrl = url;
+    }
+    
+    setTabs(prev => [...prev, newTab]);
+    handleTabChange(tabs.length);
+  }, [createNewTab, handleTabChange, tabs.length]);
+
+  return (
+    <div className="container mx-auto p-6 space-y-8">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold mb-4">Quick Access Directory</h1>
+        <p className="text-muted-foreground max-w-2xl mx-auto">
+          Click any link below to open it in a new tab. Compatible sites will open directly in the terminal.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {categories.map((category) => (
+          <Card key={category.title} className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="text-primary">{category.icon}</div>
+              <h2 className="text-xl font-semibold">{category.title}</h2>
+            </div>
+            <div className="space-y-4">
+              {category.items.map((item) => (
+                <div key={item.name} className="flex items-center justify-between">
+                  <span className="font-medium">{item.name}</span>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => openInNewTab(item.url)}
+                  >
+                    Open
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function CryptoChart() {
   const [tabs, setTabs] = useState<ChartTab[]>([]);
-  const [activeTab, setActiveTab] = useState<string | null>(null);
-  const [isNewTabDialogOpen, setIsNewTabDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<number>(0);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [searchResults, setSearchResults] = useState<any>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [isNewTabDialogOpen, setIsNewTabDialogOpen] = useState<boolean>(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
@@ -134,113 +299,223 @@ export function CryptoChart() {
     })
   );
 
-  // Create initial welcome tab on mount
-  useEffect(() => {
-    if (tabs.length === 0) {
-      const welcomeTab = {
-        id: crypto.randomUUID(),
-        title: "New Tab",
-        pair: "",
-        type: 'welcome' as const,
-        mode: null,
-      };
-      setTabs([welcomeTab]);
-      setActiveTab(welcomeTab.id);
-    }
-  }, []);
+  const currentTab = tabs[activeTab];
 
-  // Get current tab
-  const currentTab = tabs.find((tab) => tab.id === activeTab);
-
-  // Effect to initialize Google Search when tab becomes active
-  useEffect(() => {
-    if (currentTab?.type === 'google-search' && searchContainerRef.current) {
-      // Clear previous content
-      searchContainerRef.current.innerHTML = '';
-      // Create new search element
-      const searchDiv = document.createElement('div');
-      searchDiv.className = 'gcse-search';
-      searchContainerRef.current.appendChild(searchDiv);
-      
-      // Reinitialize Google Search
-      if (window.google?.search?.cse?.element?.render) {
-        window.google.search.cse.element.render({
-          div: searchDiv,
-          tag: 'search'
-        });
-      }
-    }
-  }, [currentTab?.type]);
-
-  const createNewTab = (mode: ChartTab['mode']): ChartTab => {
+  const createNewTab = useCallback((mode: ChartTab['mode']) => {
     const randomPair = TRADING_PAIRS[Math.floor(Math.random() * TRADING_PAIRS.length)];
-    const title = mode === 'memescope' ? 'MemeScope+' :
+    const title = mode === 'memescope' ? 'Memescope' :
                  mode === 'trending' ? 'Trending' :
-                 mode === 'dex' ? 'DEX Search' :
-                 mode === 'cex' ? 'CEX Search' :
+                 mode === 'dex' ? 'DEX' :
+                 mode === 'cex' ? 'CEX' :
                  mode === 'custom' ? 'Custom Chart' :
                  mode === 'watchlist' ? 'My Watchlist' :
-                 mode === 'google-search' ? 'Google Search' : randomPair;
+                 mode === 'google-search' ? 'Google Search' :
+                 mode === 'iframe-search' ? 'iFrame Only Search' :
+                 mode === 'my-home' ? 'My Home' :
+                 mode === 'test' ? 'Quick Links' : randomPair;
     
-    const type = mode === 'google-search' ? ('google-search' as const) : ('chart' as const);
+    const type = mode === 'google-search' ? 'google-search' as const :
+                mode === 'iframe-search' ? 'iframe-search' as const :
+                mode === 'my-home' ? 'my-home' as const :
+                mode === 'test' ? 'test' as const : 'chart' as const;
     
     return {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       title,
       pair: randomPair,
       type,
       mode,
+      url: undefined,
+      nonEmbeddableUrl: undefined
     };
-  };
+  }, []);
 
-  const addNewTab = (mode: ChartTab['mode']) => {
+  const clearSearchContainer = useCallback(() => {
+    if (searchContainerRef.current) {
+      while (searchContainerRef.current.firstChild) {
+        searchContainerRef.current.removeChild(searchContainerRef.current.firstChild);
+      }
+    }
+  }, []);
+
+  const handleTabChange = useCallback((newIndex: number) => {
+    clearSearchContainer();
+    setSearchResults(null);
+    setSearchQuery('');
+    setSearchError(null);
+    setActiveTab(newIndex);
+  }, [clearSearchContainer]);
+
+  const performSearch = useCallback(async (query: string, iframeOnly: boolean = false) => {
+    if (!query.trim()) return;
+    
+    setIsLoading(true);
+    setSearchError(null);
+    setSearchResults(null);
+    
+    try {
+      const response = await fetch(
+        `https://www.googleapis.com/customsearch/v1?key=AIzaSyAoVPPjimVHrzHRMS7lDueuK-hdACNodxQ&cx=83fcba2875b974a68&q=${encodeURIComponent(query)}`
+      );
+      const data = await response.json();
+      
+      if (data.error) {
+        setSearchError(data.error.message);
+        setSearchResults(null);
+      } else {
+        setSearchResults(data);
+      }
+    } catch (error) {
+      setSearchError('Failed to perform search. Please try again.');
+      setSearchResults(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const handleSearch = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    // Create a new Google Search tab
+    const newTab = createNewTab('google-search');
+    setTabs(prev => [...prev, newTab]);
+    const newTabIndex = tabs.length;
+    handleTabChange(newTabIndex);
+    // Perform the search in the new tab after a short delay to ensure tab switch
+    setTimeout(() => {
+      performSearch(searchQuery, false);
+    }, 100);
+  }, [searchQuery, performSearch, createNewTab, handleTabChange, tabs.length]);
+
+  const addNewTab = useCallback((mode: ChartTab['mode']) => {
     const newTab = createNewTab(mode);
-    setTabs([...tabs, newTab]);
-    setActiveTab(newTab.id);
+    setTabs(prev => [...prev, newTab]);
+    setActiveTab(tabs.length);
     setIsNewTabDialogOpen(false);
-  };
+  }, [createNewTab, tabs.length]);
 
-  const closeTab = (tabId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (tabs.length === 1) return; // Don't close the last tab
-    
-    const newTabs = tabs.filter((tab) => tab.id !== tabId);
-    setTabs(newTabs);
-    
-    // If we're closing the active tab, activate the previous tab
-    if (activeTab === tabId) {
-      const index = tabs.findIndex((tab) => tab.id === tabId);
-      const newActiveTab = newTabs[Math.max(0, index - 1)];
-      setActiveTab(newActiveTab.id);
+  const checkIframeCompatibility = useCallback(async (url: string): Promise<boolean> => {
+    try {
+      // First check if domain is in blacklist
+      const domain = new URL(url).hostname;
+      const NON_EMBEDDABLE_DOMAINS = [
+        'twitter.com',
+        'facebook.com',
+        'youtube.com',
+        'instagram.com',
+        'linkedin.com',
+        'reddit.com',
+        'zoom.us',
+        'merriam-webster.com',
+        'fast.com',
+        'speedtest.net',
+        'duolingo.com',
+        'uscis.gov',
+        'harvard.edu',
+        'americastestkitchen.com',
+        'av-test.org'
+      ];
+
+      // Check if domain or any parent domain is in blacklist
+      if (NON_EMBEDDABLE_DOMAINS.some(d => domain.includes(d))) {
+        return false;
+      }
+
+      // For domains not in blacklist, assume they are embeddable
+      // This is a simplification since we can't reliably check X-Frame-Options due to CORS
+      return true;
+
+    } catch (error) {
+      console.error('Error checking iframe compatibility:', error);
+      return false;
     }
-  };
+  }, []);
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      setTabs((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-
-        return arrayMove(items, oldIndex, newIndex);
-      });
+  const openInNewTab = useCallback(async (result: SearchResult) => {
+    setSearchResults(null);
+    
+    const newTab = createNewTab(currentTab?.type === 'iframe-search' ? 'iframe-search' : 'google-search');
+    
+    if (currentTab?.type === 'iframe-search') {
+      newTab.url = result.link;
+    } else {
+      const isEmbeddable = await checkIframeCompatibility(result.link);
+      if (isEmbeddable) {
+        newTab.url = result.link;
+      } else {
+        newTab.nonEmbeddableUrl = result.link;
+      }
     }
-  };
+    
+    setTabs(prev => [...prev, newTab]);
+    handleTabChange(tabs.length);
+  }, [checkIframeCompatibility, createNewTab, currentTab?.type, tabs.length, handleTabChange]);
 
-  if (!activeTab) {
-    return null; // Or a loading state
-  }
+  // Create initial welcome tab on mount
+  useEffect(() => {
+    if (tabs.length === 0) {
+      const welcomeTab: ChartTab = {
+        id: uuidv4(),
+        title: 'Welcome',
+        pair: '',
+        type: 'welcome',
+        mode: null
+      };
+      setTabs([welcomeTab]);
+      setActiveTab(0);
+    }
+  }, []);
 
   return (
     <Card className="w-full h-full flex flex-col">
       {/* Tab Bar */}
       <div className="flex items-center border-b border-border bg-muted/50 px-2 pt-2">
+        <div className="flex items-center gap-1 mr-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => handleTabChange(Math.max(0, activeTab - 1))}
+            disabled={activeTab === 0}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => handleTabChange(Math.min(tabs.length - 1, activeTab + 1))}
+            disabled={activeTab === tabs.length - 1}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => {
+              const homeTabIndex = tabs.findIndex(tab => tab.type === 'welcome');
+              if (homeTabIndex >= 0) {
+                handleTabChange(homeTabIndex);
+              }
+            }}
+          >
+            <Home className="h-4 w-4" />
+          </Button>
+        </div>
         <div className="flex-1 flex items-center overflow-x-auto scrollbar-none">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
+            onDragEnd={(event) => {
+              const { active, over } = event;
+              if (over && active.id !== over.id) {
+                setTabs((items) => {
+                  const oldIndex = items.findIndex((item) => item.id === active.id);
+                  const newIndex = items.findIndex((item) => item.id === over.id);
+                  return arrayMove(items, oldIndex, newIndex);
+                });
+              }
+            }}
           >
             <SortableContext
               items={tabs}
@@ -250,9 +525,16 @@ export function CryptoChart() {
                 <SortableTab
                   key={tab.id}
                   tab={tab}
-                  active={activeTab === tab.id}
-                  onActivate={() => setActiveTab(tab.id)}
-                  onClose={(e) => closeTab(tab.id, e)}
+                  active={activeTab === tabs.findIndex((t) => t.id === tab.id)}
+                  onActivate={() => handleTabChange(tabs.findIndex((t) => t.id === tab.id))}
+                  onClose={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    const newTabs = tabs.filter((t) => t.id !== tab.id);
+                    setTabs(newTabs);
+                    if (activeTab === tabs.findIndex((t) => t.id === tab.id)) {
+                      handleTabChange(Math.max(0, activeTab - 1));
+                    }
+                  }}
                 />
               ))}
             </SortableContext>
@@ -268,6 +550,37 @@ export function CryptoChart() {
         </Button>
       </div>
 
+      {/* Permanent Search Bar */}
+      <div className="border-b border-border p-2 bg-background">
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <input 
+            type="text" 
+            className="flex-1 px-3 py-2 rounded-md border border-border bg-background text-foreground"
+            placeholder={currentTab?.type === 'iframe-search' ? "Search for embeddable sites only..." : "Search the web..."}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSearch(e);
+              }
+            }}
+          />
+          <button 
+            type="submit"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Searching...' : 'Search'}
+          </button>
+        </form>
+        {currentTab?.type === 'iframe-search' && (
+          <div className="mt-2 text-sm text-muted-foreground bg-accent/10 p-2 rounded-md">
+            iFrame Only Mode: Results will only show sites that can be embedded
+          </div>
+        )}
+      </div>
+
       {/* New Tab Dialog */}
       <Dialog open={isNewTabDialogOpen} onOpenChange={setIsNewTabDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
@@ -275,6 +588,21 @@ export function CryptoChart() {
             <DialogTitle>Choose Tab Type</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-6 py-6">
+            <Button
+              variant="outline"
+              className="h-auto min-h-[200px] w-full p-6 flex flex-col items-center relative bg-card hover:bg-card/80"
+              onClick={() => addNewTab('my-home')}
+            >
+              <Home className="h-16 w-16 text-primary" />
+              <h3 className="font-semibold text-xl mt-4">My Home</h3>
+              <div className="mt-2">
+                <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
+                  Your personalized<br />
+                  dashboard with all<br />
+                  your favorite tools
+                </p>
+              </div>
+            </Button>
             <Button
               variant="outline"
               size="default"
@@ -381,6 +709,36 @@ export function CryptoChart() {
                 </p>
               </div>
             </Button>
+            <Button
+              variant="outline"
+              className="h-auto min-h-[200px] w-full p-6 flex flex-col items-center relative bg-card hover:bg-card/80"
+              onClick={() => addNewTab('iframe-search')}
+            >
+              <Search className="h-16 w-16 text-primary" />
+              <h3 className="font-semibold text-xl mt-4">iFrame Only Search</h3>
+              <div className="mt-2">
+                <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
+                  Search for sites that<br />
+                  can be embedded<br />
+                  directly in tabs
+                </p>
+              </div>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-auto min-h-[200px] w-full p-6 flex flex-col items-center relative bg-card hover:bg-card/80"
+              onClick={() => addNewTab('test')}
+            >
+              <List className="h-16 w-16 text-primary" />
+              <h3 className="font-semibold text-xl mt-4">Quick Links</h3>
+              <div className="mt-2">
+                <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
+                  Access popular<br />
+                  websites and tools<br />
+                  in one place
+                </p>
+              </div>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -420,14 +778,166 @@ export function CryptoChart() {
                 </p>
               </Card>
             </div>
-            <Button onClick={() => setIsNewTabDialogOpen(true)} className="mt-4">
-              <Plus className="h-4 w-4 mr-2" />
-              Open Your First Chart
-            </Button>
+            <div className="flex flex-col gap-4 items-center">
+              <Button onClick={() => setIsNewTabDialogOpen(true)} className="w-[200px]">
+                <Plus className="h-4 w-4 mr-2" />
+                Open Your First Tab
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => addNewTab('test')} 
+                className="w-[200px]"
+              >
+                <List className="h-4 w-4 mr-2" />
+                Quick Links
+              </Button>
+            </div>
           </div>
-        ) : currentTab?.type === 'google-search' ? (
-          <div className="w-full h-full flex flex-col bg-white dark:bg-background p-4 rounded-lg overflow-auto">
-            <div ref={searchContainerRef} className="w-full h-full min-h-[600px]"></div>
+        ) : currentTab?.type === 'my-home' ? (
+          <div className="h-full flex flex-col gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="p-6">
+                <div className="flex items-center gap-4">
+                  <Star className="h-8 w-8 text-primary" />
+                  <div>
+                    <h3 className="font-semibold">Quick Actions</h3>
+                    <p className="text-sm text-muted-foreground">Your most used tools</p>
+                  </div>
+                </div>
+              </Card>
+              
+              <Card className="p-6">
+                <div className="flex items-center gap-4">
+                  <LineChart className="h-8 w-8 text-primary" />
+                  <div>
+                    <h3 className="font-semibold">Market Overview</h3>
+                    <p className="text-sm text-muted-foreground">Latest market trends</p>
+                  </div>
+                </div>
+              </Card>
+              
+              <Card className="p-6">
+                <div className="flex items-center gap-4">
+                  <Sparkles className="h-8 w-8 text-primary" />
+                  <div>
+                    <h3 className="font-semibold">Trending Now</h3>
+                    <p className="text-sm text-muted-foreground">Hot topics and trends</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="p-6">
+                <h3 className="font-semibold mb-4">Recent Activity</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Opened new chart: BTC/USD</span>
+                    <span className="text-muted-foreground">2m ago</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Added to watchlist: SOL/USD</span>
+                    <span className="text-muted-foreground">15m ago</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Created custom chart</span>
+                    <span className="text-muted-foreground">1h ago</span>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-6">
+                <h3 className="font-semibold mb-4">Favorites</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>BTC/USD Chart</span>
+                    <Button variant="ghost" size="sm">Open</Button>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>My Watchlist</span>
+                    <Button variant="ghost" size="sm">Open</Button>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Market Research</span>
+                    <Button variant="ghost" size="sm">Open</Button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+        ) : currentTab?.type === 'test' ? (
+          <IframeLinkDirectory
+            createNewTab={createNewTab}
+            checkIframeCompatibility={checkIframeCompatibility}
+            setTabs={setTabs}
+            handleTabChange={handleTabChange}
+            tabs={tabs}
+          />
+        ) : currentTab?.type === 'google-search' || currentTab?.type === 'iframe-search' ? (
+          <div className="w-full h-full flex flex-col bg-white dark:bg-background rounded-lg overflow-auto">
+            {tabs.map((tab) => {
+              if (!tab.url && !tab.nonEmbeddableUrl) return null;
+              
+              if (tab.nonEmbeddableUrl) {
+                return tab.id === currentTab.id ? (
+                  <div key={tab.id} className="flex flex-col items-center justify-center gap-4 p-8">
+                    <AlertTriangle className="h-12 w-12 text-yellow-500" />
+                    <h3 className="text-xl font-semibold">This site cannot be embedded</h3>
+                    <p className="text-center text-muted-foreground">
+                      Due to security restrictions, this site cannot be displayed directly in the app.
+                      You can visit it in a new window instead.
+                    </p>
+                    <Button
+                      variant="default"
+                      onClick={() => window.open(tab.nonEmbeddableUrl, '_blank')}
+                    >
+                      Open in New Window
+                    </Button>
+                  </div>
+                ) : null;
+              }
+
+              return tab.url ? (
+                <IframeContainer
+                  key={tab.id}
+                  tab={tab}
+                  isActive={tab.id === currentTab.id}
+                />
+              ) : null;
+            })}
+
+            {!currentTab.url && !currentTab.nonEmbeddableUrl && (
+              <div className="flex flex-col gap-4">
+                {searchError && (
+                  <div className="text-sm text-red-500 bg-red-500/10 p-4 rounded-md">
+                    {searchError}
+                  </div>
+                )}
+
+                {searchResults && searchResults.items && searchResults.items.length > 0 ? (
+                  <div className="space-y-6">
+                    {searchResults.items.map((result: SearchResult) => (
+                      <div key={result.link} className="space-y-2">
+                        <h3 className="text-lg font-semibold">
+                          <button
+                            className="hover:underline text-left"
+                            onClick={() => openInNewTab(result)}
+                          >
+                            {result.title}
+                          </button>
+                        </h3>
+                        <p className="text-sm text-muted-foreground">{result.snippet}</p>
+                        <p className="text-sm text-primary">{result.link}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : searchResults && !searchError ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    No results found. Try a different search term.
+                  </div>
+                ) : null}
+              </div>
+            )}
           </div>
         ) : (
           <>
