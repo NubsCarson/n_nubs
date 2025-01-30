@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Activity, Plus, TrendingUp, X, Command, Keyboard, MousePointerClick, Rocket, Search, Star, Sparkles, LineChart, List, GripHorizontal, AlertTriangle, ChevronLeft, ChevronRight, Home, Code, Newspaper } from "lucide-react";
+import { Activity, Plus, TrendingUp, X, Command, Keyboard, MousePointerClick, Rocket, Search, Star, Sparkles, LineChart, List, GripHorizontal, AlertTriangle, ChevronLeft, ChevronRight, Home, Code, Newspaper, Maximize2, Wrench, Clock, Palette } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -35,13 +35,14 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { type VariantProps } from "class-variance-authority";
 import { v4 as uuidv4 } from 'uuid';
+import { ThemesTab } from "./ThemesTab";
 
 interface ChartTab {
   id: string;
   title: string;
   pair: string;
-  type: 'welcome' | 'chart' | 'google-search' | 'iframe-search' | 'my-home' | 'test';
-  mode: 'memescope' | 'trending' | 'dex' | 'cex' | 'custom' | 'watchlist' | 'google-search' | 'iframe-search' | 'my-home' | 'test' | null;
+  type: 'welcome' | 'chart' | 'google-search' | 'iframe-search' | 'my-home' | 'test' | 'themes';
+  mode: 'memescope' | 'trending' | 'dex' | 'cex' | 'custom' | 'watchlist' | 'google-search' | 'iframe-search' | 'my-home' | 'test' | 'themes' | null;
   url?: string;
   nonEmbeddableUrl?: string;
 }
@@ -282,8 +283,24 @@ function IframeLinkDirectory({
   );
 }
 
+// Add this interface above the component
+interface TabOption {
+  mode: ChartTab['mode'];
+  title: string;
+  description: string;
+  icon: JSX.Element;
+  category: 'trading' | 'search' | 'tools';
+}
+
 export function CryptoChart() {
-  const [tabs, setTabs] = useState<ChartTab[]>([]);
+  // Initialize with a welcome tab
+  const [tabs, setTabs] = useState<ChartTab[]>([{
+    id: uuidv4(),
+    title: "Welcome",
+    pair: "",
+    type: "welcome",
+    mode: null
+  }]);
   const [activeTab, setActiveTab] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -291,6 +308,7 @@ export function CryptoChart() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isNewTabDialogOpen, setIsNewTabDialogOpen] = useState<boolean>(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const [tabSearch, setTabSearch] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -301,10 +319,75 @@ export function CryptoChart() {
 
   const currentTab = tabs[activeTab];
 
+  // Add this constant for all available tabs
+  const TAB_OPTIONS: TabOption[] = [
+    {
+      mode: 'memescope',
+      title: 'MemeScope+',
+      description: 'Track viral tokens & trends',
+      icon: <Rocket className="h-5 w-5" />,
+      category: 'trading'
+    },
+    {
+      mode: 'trending',
+      title: 'Trending',
+      description: 'Hot market movements',
+      icon: <Sparkles className="h-5 w-5" />,
+      category: 'trading'
+    },
+    {
+      mode: 'themes',
+      title: 'Themes',
+      description: 'Customize your workspace',
+      icon: <Palette className="h-5 w-5" />,
+      category: 'tools'
+    },
+    {
+      mode: 'google-search',
+      title: 'Google Search',
+      description: 'Search the web',
+      icon: <Search className="h-5 w-5" />,
+      category: 'search'
+    },
+    {
+      mode: 'iframe-search',
+      title: 'iFrame Search',
+      description: 'Embeddable sites only',
+      icon: <Maximize2 className="h-5 w-5" />,
+      category: 'search'
+    },
+    {
+      mode: 'my-home',
+      title: 'My Home',
+      description: 'Personal dashboard',
+      icon: <Home className="h-5 w-5" />,
+      category: 'tools'
+    },
+    {
+      mode: 'test',
+      title: 'Quick Links',
+      description: 'Favorite tools & sites',
+      icon: <List className="h-5 w-5" />,
+      category: 'tools'
+    }
+  ];
+
+  // Add this function to filter tabs
+  const getFilteredTabs = useCallback((category: TabOption['category']) => {
+    return TAB_OPTIONS.filter(tab => {
+      const matchesCategory = tab.category === category;
+      const matchesSearch = tabSearch.trim() === '' || 
+        tab.title.toLowerCase().includes(tabSearch.toLowerCase()) ||
+        tab.description.toLowerCase().includes(tabSearch.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }, [tabSearch]);
+
   const createNewTab = useCallback((mode: ChartTab['mode']) => {
     const randomPair = TRADING_PAIRS[Math.floor(Math.random() * TRADING_PAIRS.length)];
     const title = mode === 'memescope' ? 'Memescope' :
                  mode === 'trending' ? 'Trending' :
+                 mode === 'themes' ? 'Themes' :
                  mode === 'dex' ? 'DEX' :
                  mode === 'cex' ? 'CEX' :
                  mode === 'custom' ? 'Custom Chart' :
@@ -317,6 +400,7 @@ export function CryptoChart() {
     const type = mode === 'google-search' ? 'google-search' as const :
                 mode === 'iframe-search' ? 'iframe-search' as const :
                 mode === 'my-home' ? 'my-home' as const :
+                mode === 'themes' ? 'themes' as const :
                 mode === 'test' ? 'test' as const : 'chart' as const;
     
     return {
@@ -498,6 +582,18 @@ export function CryptoChart() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTab, tabs, handleTabChange]);
 
+  useEffect(() => {
+    const handleOpenThemesTab = () => {
+      const newTab = createNewTab('themes');
+      setTabs(prev => [...prev, newTab]);
+      setActiveTab(tabs.length);
+      setIsNewTabDialogOpen(false);
+    };
+
+    window.addEventListener('openThemesTab', handleOpenThemesTab);
+    return () => window.removeEventListener('openThemesTab', handleOpenThemesTab);
+  }, [tabs.length]);
+
   return (
     <Card className="w-full h-full flex flex-col">
       {/* Tab Bar */}
@@ -616,169 +712,191 @@ export function CryptoChart() {
 
       {/* New Tab Dialog */}
       <Dialog open={isNewTabDialogOpen} onOpenChange={setIsNewTabDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Choose Tab Type</DialogTitle>
+        <DialogContent className="sm:max-w-[800px] p-0 gap-0 bg-background/95 backdrop-blur-md border-border/50">
+          <DialogHeader className="p-6 pb-0">
+            <DialogTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">Quick Access Hub</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-6 py-6">
-            <Button
-              variant="outline"
-              className="h-auto min-h-[200px] w-full p-6 flex flex-col items-center relative bg-card hover:bg-card/80"
-              onClick={() => addNewTab('my-home')}
-            >
-              <Home className="h-16 w-16 text-primary" />
-              <h3 className="font-semibold text-xl mt-4">My Home</h3>
-              <div className="mt-2">
-                <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
-                  Your personalized<br />
-                  dashboard with all<br />
-                  your favorite tools
-                </p>
+
+          {/* Search Filter */}
+          <div className="px-6 py-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search tabs..."
+                className="w-full pl-10 pr-4 py-2 rounded-md border border-border bg-card text-foreground"
+                value={tabSearch}
+                onChange={(e) => setTabSearch(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Tab Categories */}
+          <div className="p-6 pt-2">
+            <div className="grid grid-cols-3 gap-6">
+              {/* Trading & Analysis */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-primary flex items-center gap-2">
+                  <LineChart className="h-4 w-4" />
+                  Trading & Analysis
+                </h3>
+                <div className="space-y-2">
+                  {getFilteredTabs('trading').map((tab) => (
+                    <button
+                      key={tab.mode}
+                      onClick={() => addNewTab(tab.mode)}
+                      className="w-full p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors flex items-center gap-3 group"
+                    >
+                      <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                        {tab.icon}
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium">{tab.title}</div>
+                        <div className="text-xs text-muted-foreground">{tab.description}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </Button>
-            <Button
-              variant="outline"
-              size="default"
-              className="h-auto min-h-[200px] w-full p-6 flex flex-col items-center relative bg-card hover:bg-card/80"
-              onClick={() => addNewTab('memescope')}
-            >
-              <Rocket className="h-16 w-16 text-primary" />
-              <h3 className="font-semibold text-xl mt-4">MemeScope+</h3>
-              <div className="mt-2">
-                <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
-                  Track viral tokens<br />
-                  social sentiment &<br />
-                  emerging meme trends
-                </p>
+
+              {/* Search & Discovery */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-primary flex items-center gap-2">
+                  <Search className="h-4 w-4" />
+                  Search & Discovery
+                </h3>
+                <div className="space-y-2">
+                  {getFilteredTabs('search').map((tab) => (
+                    <button
+                      key={tab.mode}
+                      onClick={() => addNewTab(tab.mode)}
+                      className="w-full p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors flex items-center gap-3 group"
+                    >
+                      <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                        {tab.icon}
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium">{tab.title}</div>
+                        <div className="text-xs text-muted-foreground">{tab.description}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto min-h-[200px] w-full p-6 flex flex-col items-center relative bg-card hover:bg-card/80"
-              onClick={() => addNewTab('trending')}
-            >
-              <Sparkles className="h-16 w-16 text-primary" />
-              <h3 className="font-semibold text-xl mt-4">Trending</h3>
-              <div className="mt-2">
-                <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
-                  Discover the hottest<br />
-                  tokens and market<br />
-                  movements in realtime
-                </p>
+
+              {/* Tools & Utilities */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-primary flex items-center gap-2">
+                  <Wrench className="h-4 w-4" />
+                  Tools & Utilities
+                </h3>
+                <div className="space-y-2">
+                  {getFilteredTabs('tools').map((tab) => (
+                    <button
+                      key={tab.mode}
+                      onClick={() => addNewTab(tab.mode)}
+                      className="w-full p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors flex items-center gap-3 group"
+                    >
+                      <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                        {tab.icon}
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium">{tab.title}</div>
+                        <div className="text-xs text-muted-foreground">{tab.description}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto min-h-[200px] w-full p-6 flex flex-col items-center relative bg-card hover:bg-card/80"
-              onClick={() => addNewTab('dex')}
-            >
-              <Search className="h-16 w-16 text-primary" />
-              <h3 className="font-semibold text-xl mt-4">Search DEX</h3>
-              <div className="mt-2">
-                <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
-                  Find and analyze<br />
-                  tokens across all<br />
-                  decentralized exchanges
-                </p>
+            </div>
+
+            {/* Recently Used */}
+            <div className="mt-6">
+              <h3 className="font-semibold text-primary flex items-center gap-2 mb-4">
+                <Clock className="h-4 w-4" />
+                Recently Used
+              </h3>
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {tabs.slice(-4).reverse().map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      const newTab = createNewTab(tab.mode);
+                      setTabs(prev => [...prev, newTab]);
+                      setActiveTab(tabs.length);
+                      setIsNewTabDialogOpen(false);
+                    }}
+                    className="flex-shrink-0 p-2 rounded-md border border-border bg-card hover:bg-accent/50 transition-colors flex items-center gap-2"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                      {tab.mode === 'memescope' ? <Rocket className="h-4 w-4" /> :
+                       tab.mode === 'trending' ? <Sparkles className="h-4 w-4" /> :
+                       tab.mode === 'google-search' ? <Search className="h-4 w-4" /> :
+                       tab.mode === 'my-home' ? <Home className="h-4 w-4" /> :
+                       <List className="h-4 w-4" />}
+                    </div>
+                    <span className="text-sm font-medium">{tab.title}</span>
+                  </button>
+                ))}
               </div>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto min-h-[200px] w-full p-6 flex flex-col items-center relative bg-card hover:bg-card/80"
-              onClick={() => addNewTab('cex')}
-            >
-              <LineChart className="h-16 w-16 text-primary" />
-              <h3 className="font-semibold text-xl mt-4">Search CEX</h3>
-              <div className="mt-2">
-                <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
-                  Explore tokens listed<br />
-                  on major centralized<br />
-                  exchanges worldwide
-                </p>
-              </div>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto min-h-[200px] w-full p-6 flex flex-col items-center relative bg-card hover:bg-card/80"
-              onClick={() => addNewTab('custom')}
-            >
-              <Activity className="h-16 w-16 text-primary" />
-              <h3 className="font-semibold text-xl mt-4">Create Your Own!</h3>
-              <div className="mt-2">
-                <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
-                  Launch your token<br />
-                  with AI-powered smart<br />
-                  contract generation
-                </p>
-              </div>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto min-h-[200px] w-full p-6 flex flex-col items-center relative bg-card hover:bg-card/80"
-              onClick={() => addNewTab('watchlist')}
-            >
-              <List className="h-16 w-16 text-primary" />
-              <h3 className="font-semibold text-xl mt-4">My Watchlist's</h3>
-              <div className="mt-2">
-                <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
-                  Monitor your tokens<br />
-                  with custom alerts<br />
-                  and analytics
-                </p>
-              </div>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto min-h-[200px] w-full p-6 flex flex-col items-center relative bg-card hover:bg-card/80"
-              onClick={() => addNewTab('google-search')}
-            >
-              <Search className="h-16 w-16 text-primary" />
-              <h3 className="font-semibold text-xl mt-4">Google Search</h3>
-              <div className="mt-2">
-                <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
-                  Search the web<br />
-                  directly from your<br />
-                  terminal
-                </p>
-              </div>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto min-h-[200px] w-full p-6 flex flex-col items-center relative bg-card hover:bg-card/80"
-              onClick={() => addNewTab('iframe-search')}
-            >
-              <Search className="h-16 w-16 text-primary" />
-              <h3 className="font-semibold text-xl mt-4">iFrame Only Search</h3>
-              <div className="mt-2">
-                <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
-                  Search for sites that<br />
-                  can be embedded<br />
-                  directly in tabs
-                </p>
-              </div>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto min-h-[200px] w-full p-6 flex flex-col items-center relative bg-card hover:bg-card/80"
-              onClick={() => addNewTab('test')}
-            >
-              <List className="h-16 w-16 text-primary" />
-              <h3 className="font-semibold text-xl mt-4">Quick Links</h3>
-              <div className="mt-2">
-                <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
-                  Access popular<br />
-                  websites and tools<br />
-                  in one place
-                </p>
-              </div>
-            </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Content */}
-      <div className="flex-1 p-4">
-        {currentTab?.type === 'welcome' ? (
+      <div className="flex-1 min-h-0">
+        {!currentTab ? (
+          // Fallback content when no tab is active
+          <div className="h-full flex items-center justify-center">
+            <p className="text-muted-foreground">No active tab</p>
+          </div>
+        ) : currentTab.type === 'themes' ? (
+          <ThemesTab />
+        ) : currentTab.type === 'google-search' || currentTab.type === 'iframe-search' ? (
+          <>
+            {/* Search Bar */}
+            <div className="border-b border-border p-2 bg-background">
+              <form onSubmit={handleSearch} className="flex gap-2">
+                <input 
+                  type="text" 
+                  className="flex-1 px-3 py-2 rounded-md border border-border bg-background text-foreground"
+                  placeholder={currentTab.type === 'iframe-search' ? "Search for embeddable sites only..." : "Search the web..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSearch(e);
+                    }
+                  }}
+                />
+                <button 
+                  type="submit"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Searching...' : 'Search'}
+                </button>
+              </form>
+              {currentTab.type === 'iframe-search' && (
+                <div className="mt-2 text-sm text-muted-foreground bg-accent/10 p-2 rounded-md">
+                  iFrame Only Mode: Results will only show sites that can be embedded
+                </div>
+              )}
+            </div>
+            {/* Search Results */}
+            <div ref={searchContainerRef} className="flex-1 overflow-auto" />
+          </>
+        ) : currentTab.type === 'test' ? (
+          <IframeLinkDirectory
+            createNewTab={createNewTab}
+            checkIframeCompatibility={checkIframeCompatibility}
+            setTabs={setTabs}
+            handleTabChange={handleTabChange}
+            tabs={tabs}
+          />
+        ) : currentTab.type === 'welcome' ? (
           <div className="h-full flex flex-col items-center justify-center gap-8 max-w-2xl mx-auto text-center">
             <h1 className="text-3xl font-bold">Welcome to n_nubs Terminal</h1>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
@@ -813,7 +931,7 @@ export function CryptoChart() {
             </div>
             <div className="flex flex-col gap-4 items-center">
               <Button onClick={() => setIsNewTabDialogOpen(true)} className="w-[200px]">
-                <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 mr-2" />
                 Open Your First Tab
               </Button>
               <Button 
@@ -826,7 +944,7 @@ export function CryptoChart() {
               </Button>
             </div>
           </div>
-        ) : currentTab?.type === 'my-home' ? (
+        ) : currentTab.type === 'my-home' ? (
           <div className="h-full flex flex-col gap-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="p-6">
@@ -898,22 +1016,13 @@ export function CryptoChart() {
               </Card>
             </div>
           </div>
-        ) : currentTab?.type === 'test' ? (
-          <IframeLinkDirectory
-            createNewTab={createNewTab}
-            checkIframeCompatibility={checkIframeCompatibility}
-            setTabs={setTabs}
-            handleTabChange={handleTabChange}
-            tabs={tabs}
-          />
-        ) : currentTab?.type === 'google-search' || currentTab?.type === 'iframe-search' ? (
-          <div className="w-full h-full flex flex-col bg-white dark:bg-background rounded-lg overflow-auto">
-            {tabs.map((tab) => {
-              if (!tab.url && !tab.nonEmbeddableUrl) return null;
-              
-              if (tab.nonEmbeddableUrl) {
-                return tab.id === currentTab.id ? (
-                  <div key={tab.id} className="flex flex-col items-center justify-center gap-4 p-8">
+        ) : (
+          <div className="h-full">
+            {/* Chart/iframe content */}
+            <div className="w-full h-full bg-white dark:bg-background rounded-lg overflow-auto">
+              {currentTab && (currentTab.url || currentTab.nonEmbeddableUrl) ? (
+                currentTab.nonEmbeddableUrl ? (
+                  <div className="flex flex-col items-center justify-center gap-4 p-8">
                     <AlertTriangle className="h-12 w-12 text-yellow-500" />
                     <h3 className="text-xl font-semibold">This site cannot be embedded</h3>
                     <p className="text-center text-muted-foreground">
@@ -922,114 +1031,52 @@ export function CryptoChart() {
                     </p>
                     <Button
                       variant="default"
-                      onClick={() => window.open(tab.nonEmbeddableUrl, '_blank')}
+                      onClick={() => window.open(currentTab.nonEmbeddableUrl, '_blank')}
                     >
                       Open in New Window
                     </Button>
                   </div>
-                ) : null;
-              }
+                ) : currentTab.url ? (
+                  <IframeContainer
+                    key={currentTab.id}
+                    tab={currentTab}
+                    isActive={true}
+                  />
+                ) : null
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {searchError && (
+                    <div className="text-sm text-red-500 bg-red-500/10 p-4 rounded-md">
+                      {searchError}
+                    </div>
+                  )}
 
-              return tab.url ? (
-                <IframeContainer
-                  key={tab.id}
-                  tab={tab}
-                  isActive={tab.id === currentTab.id}
-                />
-              ) : null;
-            })}
-
-            {!currentTab.url && !currentTab.nonEmbeddableUrl && (
-              <div className="flex flex-col gap-4">
-                {searchError && (
-                  <div className="text-sm text-red-500 bg-red-500/10 p-4 rounded-md">
-                    {searchError}
-                  </div>
-                )}
-
-                {searchResults && searchResults.items && searchResults.items.length > 0 ? (
-                  <div className="space-y-6">
-                    {searchResults.items.map((result: SearchResult) => (
-                      <div key={result.link} className="space-y-2">
-                        <h3 className="text-lg font-semibold">
-                          <button
-                            className="hover:underline text-left"
-                            onClick={() => openInNewTab(result)}
-                          >
-                            {result.title}
-                          </button>
-                        </h3>
-                        <p className="text-sm text-muted-foreground">{result.snippet}</p>
-                        <p className="text-sm text-primary">{result.link}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : searchResults && !searchError ? (
-                  <div className="text-center text-muted-foreground py-8">
-                    No results found. Try a different search term.
-                  </div>
-                ) : null}
-              </div>
-            )}
+                  {searchResults && searchResults.items && searchResults.items.length > 0 ? (
+                    <div className="space-y-6">
+                      {searchResults.items.map((result: SearchResult) => (
+                        <div key={result.link} className="space-y-2">
+                          <h3 className="text-lg font-semibold">
+                            <button
+                              className="hover:underline text-left"
+                              onClick={() => openInNewTab(result)}
+                            >
+                              {result.title}
+                            </button>
+                          </h3>
+                          <p className="text-sm text-muted-foreground">{result.snippet}</p>
+                          <p className="text-sm text-primary">{result.link}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : searchResults && !searchError ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      No results found. Try a different search term.
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
           </div>
-        ) : (
-          <>
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-2">
-                {/* Removing the redundant pair display and dropdown */}
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Timeframe Selection */}
-                <div className="bg-card border border-border rounded-lg overflow-hidden">
-                  <Select defaultValue="1h">
-                    <SelectTrigger className="w-[100px] h-9 text-sm bg-transparent border-0 focus:ring-0 rounded-none">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                      <SelectItem value="live" className="text-sm">LIVE</SelectItem>
-                      <SelectItem value="15s" className="text-sm">15s</SelectItem>
-                      <SelectItem value="30s" className="text-sm">30s</SelectItem>
-                      <SelectItem value="1m" className="text-sm">1m</SelectItem>
-                      <SelectItem value="5m" className="text-sm">5m</SelectItem>
-                      <SelectItem value="10m" className="text-sm">10m</SelectItem>
-                      <SelectItem value="15m" className="text-sm">15m</SelectItem>
-                      <SelectItem value="30m" className="text-sm">30m</SelectItem>
-                      <SelectItem value="1h" className="text-sm">1H</SelectItem>
-                      <SelectItem value="4h" className="text-sm">4H</SelectItem>
-                      <SelectItem value="1d" className="text-sm">1D</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Metric Selection */}
-                <div className="bg-card border border-border rounded-lg overflow-hidden">
-                  <Select defaultValue="price">
-                    <SelectTrigger className="w-[120px] h-9 text-sm bg-transparent border-0 focus:ring-0 rounded-none">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                      <SelectItem value="price" className="text-sm">
-                        <span className="flex items-center gap-2">
-                          <TrendingUp className="h-3.5 w-3.5" />
-                          Price
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="mcap" className="text-sm">
-                        <span className="flex items-center gap-2">
-                          <Activity className="h-3.5 w-3.5" />
-                          Market Cap
-                        </span>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-            <div className="w-full h-[calc(100%-3rem)] bg-background rounded-lg border border-border flex items-center justify-center">
-              <p className="text-muted-foreground">Chart coming soon...</p>
-              {/* We'll integrate a real chart library here later */}
-            </div>
-          </>
         )}
       </div>
     </Card>

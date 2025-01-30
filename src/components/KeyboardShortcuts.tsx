@@ -40,7 +40,7 @@ const shortcutSections: ShortcutSection[] = [
     shortcuts: [
       { keys: ["ctrl", "y"], description: "Toggle Calendar Calculator" },
       { keys: ["ctrl", "m"], description: "Toggle Media Player" },
-      { keys: ["ctrl", "c"], description: "Toggle Calculator" }
+      { keys: ["alt", "c"], description: "Toggle Calculator" }
     ],
   }
 ];
