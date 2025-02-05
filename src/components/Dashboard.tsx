@@ -131,21 +131,20 @@ const Dashboard = () => {
             >
               <div className="flex flex-col items-center text-center">
                 <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#9945FF] to-[#14F195] tracking-tight flex items-center gap-3 whitespace-nowrap">
-                n_nubs
+                  n_nubs
                   <Hand className="h-8 w-8 text-[#14F195] animate-wave flex-shrink-0" />
-              </h2>
+                </h2>
                 <div className="flex items-center gap-2 mt-1 w-full">
                   <div className="h-px flex-1 bg-gradient-to-r from-[#9945FF]/50 to-[#14F195]/50" />
-                  <span className="text-sm font-mono text-muted-foreground tracking-widest whitespace-nowrap px-2">TERMINAL</span>
+                  <div className="flex items-center gap-1">
+                    <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-sm font-mono text-muted-foreground tracking-widest whitespace-nowrap">TERMINAL</span>
+                  </div>
                   <div className="h-px flex-1 bg-gradient-to-r from-[#14F195]/50 to-[#9945FF]/50" />
                 </div>
               </div>
             </a>
             <div className="space-y-3">
-              <a href="#" className="flex items-center gap-2 text-base text-muted-foreground hover:text-foreground transition-colors">
-                <Terminal className="h-5 w-5" />
-                <span>terminal</span>
-              </a>
               <GMStreak />
             </div>
           </div>
@@ -169,7 +168,7 @@ const Dashboard = () => {
             direction="vertical"
             defaultSize={200}
             minSize={55}
-          maxSize={440}
+          maxSize={430}
           className="border-t border-border"
           >
               <ChatPanel />

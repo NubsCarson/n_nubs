@@ -85,6 +85,121 @@
     --input: 240 3.7% 15.9%;
     --ring: 142.4 71.8% 29.2%;
   }
+
+  /* Neon Future Theme */
+  [data-theme="neon-future"] {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 322 90% 65%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 5% 10%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 5% 10%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 240 5% 10%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 10%;
+    --input: 240 5% 10%;
+    --ring: 322 90% 65%;
+  }
+
+  /* Arctic Dawn Theme */
+  [data-theme="arctic-dawn"] {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 199 89% 48%;
+  }
+
+  /* Sunset Vibes Theme */
+  [data-theme="sunset-vibes"] {
+    --background: 0 0% 100%;
+    --foreground: 20 14.3% 4.1%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 14.3% 4.1%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14.3% 4.1%;
+    --primary: 15.1 56.2% 45.3%;
+    --primary-foreground: 60 9.1% 97.8%;
+    --secondary: 60 4.8% 95.9%;
+    --secondary-foreground: 24 9.8% 10%;
+    --muted: 60 4.8% 95.9%;
+    --muted-foreground: 25 5.3% 44.7%;
+    --accent: 60 4.8% 95.9%;
+    --accent-foreground: 24 9.8% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 60 9.1% 97.8%;
+    --border: 20 5.9% 90%;
+    --input: 20 5.9% 90%;
+    --ring: 15.1 56.2% 45.3%;
+  }
+
+  /* Matrix Theme */
+  [data-theme="matrix"] {
+    --background: 150 5% 5%;
+    --foreground: 150 10% 95%;
+    --card: 150 5% 8%;
+    --card-foreground: 150 10% 95%;
+    --popover: 150 5% 5%;
+    --popover-foreground: 150 10% 95%;
+    --primary: 150 50% 45%;
+    --primary-foreground: 150 10% 95%;
+    --secondary: 150 5% 15%;
+    --secondary-foreground: 150 10% 95%;
+    --muted: 150 5% 15%;
+    --muted-foreground: 150 10% 65%;
+    --accent: 150 5% 15%;
+    --accent-foreground: 150 10% 95%;
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 150 10% 95%;
+    --border: 150 5% 15%;
+    --input: 150 5% 15%;
+    --ring: 150 50% 45%;
+  }
+
+  /* Galaxy Theme */
+  [data-theme="galaxy"] {
+    --background: 230 35% 7%;
+    --foreground: 230 5% 95%;
+    --card: 230 35% 10%;
+    --card-foreground: 230 5% 95%;
+    --popover: 230 35% 7%;
+    --popover-foreground: 230 5% 95%;
+    --primary: 230 60% 70%;
+    --primary-foreground: 230 5% 95%;
+    --secondary: 230 35% 15%;
+    --secondary-foreground: 230 5% 95%;
+    --muted: 230 35% 15%;
+    --muted-foreground: 230 5% 65%;
+    --accent: 230 35% 15%;
+    --accent-foreground: 230 5% 95%;
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 230 5% 95%;
+    --border: 230 35% 15%;
+    --input: 230 35% 15%;
+    --ring: 230 60% 70%;
+  }
 }
 
 @layer base {
@@ -181,4 +296,38 @@
 
 .dark .gsc-result {
   background: transparent !important;
+}
+
+/* Theme animations */
+.theme-preview-hover {
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-preview-hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 100%
+  );
+  animation: shine 3s infinite;
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  20% {
+    left: 100%;
+  }
+  100% {
+    left: 100%;
+  }
 }

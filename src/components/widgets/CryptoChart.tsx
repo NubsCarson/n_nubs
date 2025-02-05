@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Activity, Plus, TrendingUp, X, Command, Keyboard, MousePointerClick as MousePointerClickIcon, Rocket, Search, Star, Sparkles, LineChart, List, GripHorizontal, AlertTriangle, ChevronLeft, ChevronRight, Home, Code, Newspaper, Maximize2, Wrench, Clock, Palette } from "lucide-react";
+import { Activity, Plus, TrendingUp, X, Command, Keyboard, MousePointerClick as MousePointerClickIcon, Rocket, Search, Star, Sparkles, LineChart, List, GripHorizontal, AlertTriangle, ChevronLeft, ChevronRight, Home, Code, Newspaper, Maximize2, Wrench, Clock, Palette, Calculator, Shield, ExternalLink, Lock } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -304,8 +304,8 @@ export function CryptoChart() {
   const [activeTab, setActiveTab] = useState<number>(0);
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [searchResults, setSearchResults] = useState<SearchResponse | null>(null);
-  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<Record<string, SearchResponse | null>>({});
+  const [searchErrors, setSearchErrors] = useState<Record<string, string | null>>({});
   const [isNewTabDialogOpen, setIsNewTabDialogOpen] = useState<boolean>(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const [tabSearch, setTabSearch] = useState("");
@@ -357,13 +357,6 @@ export function CryptoChart() {
       category: 'search'
     },
     {
-      mode: 'my-home',
-      title: 'My Home',
-      description: 'Personal dashboard',
-      icon: <Home className="h-5 w-5" />,
-      category: 'tools'
-    },
-    {
       mode: 'test',
       title: 'Quick Links',
       description: 'Favorite tools & sites',
@@ -394,12 +387,10 @@ export function CryptoChart() {
                  mode === 'watchlist' ? 'My Watchlist' :
                  mode === 'google-search' ? 'Google Search' :
                  mode === 'iframe-search' ? 'iFrame Only Search' :
-                 mode === 'my-home' ? 'My Home' :
                  mode === 'test' ? 'Quick Links' : randomPair;
     
     const type = mode === 'google-search' ? 'google-search' as const :
                 mode === 'iframe-search' ? 'iframe-search' as const :
-                mode === 'my-home' ? 'my-home' as const :
                 mode === 'themes' ? 'themes' as const :
                 mode === 'test' ? 'test' as const : 'chart' as const;
     
@@ -424,9 +415,6 @@ export function CryptoChart() {
 
   const handleTabChange = useCallback((newIndex: number) => {
     clearSearchContainer();
-    setSearchResults(null);
-    setSearchQueries({});
-    setSearchError(null);
     setActiveTab(newIndex);
   }, [clearSearchContainer]);
 
@@ -434,8 +422,7 @@ export function CryptoChart() {
     if (!query.trim()) return;
     
     setIsLoading(true);
-    setSearchError(null);
-    setSearchResults(null);
+    setSearchErrors(prev => ({ ...prev, [tabId]: null }));
     
     try {
       const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
@@ -456,14 +443,17 @@ export function CryptoChart() {
       const data: SearchResponse = await response.json();
       
       if (data.error) {
-        setSearchError(data.error.message);
-        setSearchResults(null);
+        setSearchErrors(prev => ({ ...prev, [tabId]: data.error.message }));
+        setSearchResults(prev => ({ ...prev, [tabId]: null }));
       } else {
-        setSearchResults(data);
+        setSearchResults(prev => ({ ...prev, [tabId]: data }));
       }
     } catch (error) {
-      setSearchError(error instanceof Error ? error.message : 'Failed to perform search. Please try again.');
-      setSearchResults(null);
+      setSearchErrors(prev => ({ 
+        ...prev, 
+        [tabId]: error instanceof Error ? error.message : 'Failed to perform search. Please try again.' 
+      }));
+      setSearchResults(prev => ({ ...prev, [tabId]: null }));
     } finally {
       setIsLoading(false);
     }
@@ -473,9 +463,23 @@ export function CryptoChart() {
     e.preventDefault();
     const query = searchQueries[tabId];
     if (!query?.trim()) return;
-    
-    performSearch(query, tabId);
-  }, [searchQueries, performSearch]);
+
+    // Create a new search tab if we're not already in a search tab
+    if (!currentTab?.type?.includes('search')) {
+      const newTab = createNewTab('google-search');
+      setTabs(prev => [...prev, newTab]);
+      setActiveTab(tabs.length);
+      // Update the search query for the new tab
+      setSearchQueries(prev => ({
+        ...prev,
+        [newTab.id]: query
+      }));
+      // Perform search in the new tab after a short delay to ensure state updates
+      setTimeout(() => performSearch(query, newTab.id), 0);
+    } else {
+      performSearch(query, tabId);
+    }
+  }, [searchQueries, performSearch, currentTab?.type, createNewTab, tabs.length]);
 
   const handleSearchInputChange = useCallback((value: string, tabId: string) => {
     setSearchQueries(prev => ({
@@ -529,7 +533,7 @@ export function CryptoChart() {
   }, []);
 
   const openInNewTab = useCallback(async (result: SearchResult) => {
-    setSearchResults(null);
+    setSearchResults(prev => ({ ...prev, [currentTab.id]: null }));
     
     const newTab = createNewTab(currentTab?.type === 'iframe-search' ? 'iframe-search' : 'google-search');
     
@@ -637,42 +641,76 @@ export function CryptoChart() {
   }, [activeTab]);
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden">
-      <div className="flex items-center gap-2 p-2 bg-card border-b border-border overflow-x-auto">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
+    <div className="h-full flex flex-col">
+      {/* Persistent Search Bar */}
+      <div className="flex-shrink-0 border-b border-border p-2 bg-background">
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          if (currentTab?.id) {
+            handleSearch(e, currentTab.id);
+          }
+        }} className="flex gap-2">
+          <input 
+            type="text" 
+            className="flex-1 px-3 py-2 rounded-md border border-border bg-background text-foreground"
+            placeholder="Search the web..."
+            value={searchQueries[currentTab?.id || ''] || ''}
+            onChange={(e) => handleSearchInputChange(e.target.value, currentTab?.id || '')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentTab?.id) {
+                  handleSearch(e, currentTab.id);
+                }
+              }
+            }}
+          />
+          <button 
+            type="submit"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+            disabled={isLoading}
           >
-            <SortableContext
-            items={tabs.map((tab) => tab.id)}
-              strategy={horizontalListSortingStrategy}
-            >
-            {tabs.map((tab, index) => (
+            {isLoading ? 'Searching...' : 'Search'}
+          </button>
+        </form>
+      </div>
+
+      {/* Tabs Header */}
+      <div className="flex-shrink-0 border-b border-border">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={tabs.map(t => t.id)} strategy={horizontalListSortingStrategy}>
+            <div className="flex items-center p-2 gap-2 overflow-x-auto">
+              {tabs.map((tab, index) => (
                 <SortableTab
                   key={tab.id}
                   tab={tab}
-                active={index === activeTab}
-                onActivate={() => handleTabChange(index)}
-                onClose={(e) => {
-                  e.stopPropagation();
-                  closeTab(index);
-                }}
+                  active={index === activeTab}
+                  onActivate={() => handleTabChange(index)}
+                  onClose={(e) => {
+                    e.stopPropagation();
+                    closeTab(index);
+                  }}
                 />
               ))}
-            </SortableContext>
-          </DndContext>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="flex-shrink-0"
-          onClick={() => setIsNewTabDialogOpen(true)}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 ml-2"
+                onClick={() => setIsNewTabDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
 
-      <div className="flex-1 overflow-hidden relative">
+      {/* Tab Content */}
+      <div className="flex-1 overflow-auto">
         {currentTab?.type === 'welcome' && (
           <div className="h-full flex flex-col items-center justify-center gap-8 max-w-2xl mx-auto text-center p-6">
             <h1 className="text-3xl font-bold">Welcome to n_nubs Terminal</h1>
@@ -723,111 +761,54 @@ export function CryptoChart() {
           </div>
         )}
 
-        {currentTab?.type === 'my-home' && (
-          <div className="h-full flex flex-col gap-6 p-6 overflow-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="p-6">
-                <div className="flex items-center gap-4">
-                  <Star className="h-8 w-8 text-primary" />
-                  <div>
-                    <h3 className="font-semibold">Quick Actions</h3>
-                    <p className="text-sm text-muted-foreground">Your most used tools</p>
-              </div>
-                </div>
-              </Card>
-              
-              <Card className="p-6">
-                <div className="flex items-center gap-4">
-                  <LineChart className="h-8 w-8 text-primary" />
-                  <div>
-                    <h3 className="font-semibold">Market Overview</h3>
-                    <p className="text-sm text-muted-foreground">Latest market trends</p>
-                  </div>
-                </div>
-              </Card>
-              
-              <Card className="p-6">
-                <div className="flex items-center gap-4">
+        {(currentTab?.mode === 'memescope' || currentTab?.mode === 'trending') && (
+          <div className="h-full flex flex-col items-center justify-center p-6">
+            <div className="max-w-md text-center space-y-4">
+              <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
+                {currentTab.mode === 'memescope' ? (
+                  <Rocket className="h-8 w-8 text-primary" />
+                ) : (
                   <Sparkles className="h-8 w-8 text-primary" />
-                  <div>
-                    <h3 className="font-semibold">Trending Now</h3>
-                    <p className="text-sm text-muted-foreground">Hot topics and trends</p>
-                </div>
+                )}
               </div>
-              </Card>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="p-6">
-                <h3 className="font-semibold mb-4">Recent Activity</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Opened new chart: BTC/USD</span>
-                    <span className="text-muted-foreground">2m ago</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Added to watchlist: SOL/USD</span>
-                    <span className="text-muted-foreground">15m ago</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Created custom chart</span>
-                    <span className="text-muted-foreground">1h ago</span>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <h3 className="font-semibold mb-4">Favorites</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>BTC/USD Chart</span>
-                    <Button variant="ghost" size="sm" onClick={() => addNewTab('memescope')}>Open</Button>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span>My Watchlist</span>
-                    <Button variant="ghost" size="sm" onClick={() => addNewTab('trending')}>Open</Button>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Market Research</span>
-                    <Button variant="ghost" size="sm" onClick={() => addNewTab('google-search')}>Open</Button>
-                  </div>
-                </div>
-              </Card>
+              <h2 className="text-2xl font-bold">
+                {currentTab.mode === 'memescope' ? 'MemeScope+' : 'Trending'} Coming Soon
+              </h2>
+              <p className="text-muted-foreground">
+                {currentTab.mode === 'memescope' ? (
+                  'Track viral tokens and market trends with advanced memecoin analytics and social sentiment tracking.'
+                ) : (
+                  'Discover the hottest tokens and market movements with real-time trending data and analysis.'
+                )}
+              </p>
+              <div className="pt-4">
+                <Button variant="outline" onClick={() => addNewTab('google-search')}>
+                  <Search className="h-4 w-4 mr-2" />
+                  Search Web Instead
+                </Button>
+              </div>
             </div>
           </div>
         )}
 
         {currentTab?.type === 'google-search' && (
           <div className="h-full flex flex-col p-4">
-            <form onSubmit={(e) => handleSearch(e, currentTab.id)} className="flex gap-2 mb-4">
-              <input
-                type="text"
-                value={searchQueries[currentTab.id] || ''}
-                onChange={(e) => handleSearchInputChange(e.target.value, currentTab.id)}
-                placeholder="Search the web..."
-                className="flex-1 px-3 py-2 rounded-md border border-border bg-background"
-              />
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Searching...' : 'Search'}
-              </Button>
-            </form>
-
-            {searchError && (
+            {searchErrors[currentTab.id] && (
               <div className="p-4 mb-4 rounded-md bg-destructive/10 text-destructive">
-                {searchError}
+                {searchErrors[currentTab.id]}
               </div>
             )}
 
-            {searchResults && (
+            {searchResults[currentTab.id] ? (
               <div className="overflow-auto">
-                {searchResults.searchInformation && (
+                {searchResults[currentTab.id]?.searchInformation && (
                   <div className="text-sm text-muted-foreground mb-4">
-                    About {searchResults.searchInformation.totalResults} results ({searchResults.searchInformation.searchTime} seconds)
+                    About {searchResults[currentTab.id]?.searchInformation.totalResults} results ({searchResults[currentTab.id]?.searchInformation.searchTime} seconds)
                   </div>
                 )}
                 
                 <div className="space-y-6">
-                  {searchResults.items?.map((result, index) => (
+                  {searchResults[currentTab.id]?.items?.map((result, index) => (
                     <div key={index} className="space-y-1">
                       <a
                         href={result.link}
@@ -847,12 +828,239 @@ export function CryptoChart() {
                   ))}
                 </div>
               </div>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center max-w-2xl mx-auto p-6">
+                <div className="w-full space-y-8">
+                  {/* Quick Search Categories */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => {
+                      if (currentTab?.id) {
+                        handleSearchInputChange("crypto market news today", currentTab.id);
+                        const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+                        handleSearch(fakeEvent, currentTab.id);
+                      }
+                    }}>
+                      <div className="flex items-center gap-3">
+                        <TrendingUp className="h-5 w-5 text-primary" />
+                        <div>
+                          <h3 className="font-medium">Crypto Markets</h3>
+                          <p className="text-xs text-muted-foreground">Latest market updates and news</p>
+                        </div>
+                      </div>
+                    </Card>
+
+                    <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => {
+                      if (currentTab?.id) {
+                        handleSearchInputChange("web3 development tutorials", currentTab.id);
+                        const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+                        handleSearch(fakeEvent, currentTab.id);
+                      }
+                    }}>
+                      <div className="flex items-center gap-3">
+                        <Code className="h-5 w-5 text-primary" />
+                        <div>
+                          <h3 className="font-medium">Web3 Dev</h3>
+                          <p className="text-xs text-muted-foreground">Development resources and guides</p>
+                        </div>
+                      </div>
+                    </Card>
+
+                    <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => {
+                      if (currentTab?.id) {
+                        handleSearchInputChange("blockchain technology news", currentTab.id);
+                        const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+                        handleSearch(fakeEvent, currentTab.id);
+                      }
+                    }}>
+                      <div className="flex items-center gap-3">
+                        <Newspaper className="h-5 w-5 text-primary" />
+                        <div>
+                          <h3 className="font-medium">Tech News</h3>
+                          <p className="text-xs text-muted-foreground">Latest in blockchain and tech</p>
+                        </div>
+                      </div>
+                    </Card>
+
+                    <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => {
+                      if (currentTab?.id) {
+                        handleSearchInputChange("crypto trading tools and analysis", currentTab.id);
+                        const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+                        handleSearch(fakeEvent, currentTab.id);
+                      }
+                    }}>
+                      <div className="flex items-center gap-3">
+                        <Wrench className="h-5 w-5 text-primary" />
+                        <div>
+                          <h3 className="font-medium">Trading Tools</h3>
+                          <p className="text-xs text-muted-foreground">Analysis and trading resources</p>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+
+                  {/* Search Tips */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground">Search Tips:</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-primary" />
+                        <span>Use time filters for recent results</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Command className="h-4 w-4 text-primary" />
+                        <span>Press Enter to search quickly</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Search className="h-4 w-4 text-primary" />
+                        <span>Add "site:" to search specific websites</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Keyboard className="h-4 w-4 text-primary" />
+                        <span>Use quotes for exact matches</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         )}
 
         {currentTab?.type === 'iframe-search' && (
-          <IframeContainer tab={currentTab} isActive={true} />
+          <div className="h-full flex flex-col p-4">
+            {searchErrors[currentTab.id] && (
+              <div className="p-4 mb-4 rounded-md bg-destructive/10 text-destructive">
+                {searchErrors[currentTab.id]}
+              </div>
+            )}
+
+            {searchResults[currentTab.id] ? (
+              <div className="overflow-auto">
+                {searchResults[currentTab.id]?.searchInformation && (
+                  <div className="text-sm text-muted-foreground mb-4">
+                    About {searchResults[currentTab.id]?.searchInformation.totalResults} results ({searchResults[currentTab.id]?.searchInformation.searchTime} seconds)
+                  </div>
+                )}
+                
+                <div className="space-y-6">
+                  {searchResults[currentTab.id]?.items?.map((result, index) => (
+                    <div key={index} className="space-y-1">
+                      <a
+                        href={result.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline block"
+                        dangerouslySetInnerHTML={{ __html: result.htmlTitle }}
+                      />
+                      <div className="text-sm text-muted-foreground">
+                        {result.displayLink}
+                      </div>
+                      <div
+                        className="text-sm"
+                        dangerouslySetInnerHTML={{ __html: result.htmlSnippet }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : currentTab.url ? (
+              <IframeContainer tab={currentTab} isActive={true} />
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center max-w-2xl mx-auto p-6">
+                <div className="w-full space-y-8">
+                  {/* Quick iFrame Categories */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => {
+                      if (currentTab?.id) {
+                        handleSearchInputChange("tradingview chart site:tradingview.com", currentTab.id);
+                        const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+                        handleSearch(fakeEvent, currentTab.id);
+                      }
+                    }}>
+                      <div className="flex items-center gap-3">
+                        <LineChart className="h-5 w-5 text-primary" />
+                        <div>
+                          <h3 className="font-medium">Trading Charts</h3>
+                          <p className="text-xs text-muted-foreground">Interactive price charts and analysis</p>
+                        </div>
+                      </div>
+                    </Card>
+
+                    <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => {
+                      if (currentTab?.id) {
+                        handleSearchInputChange("crypto dashboard dexscreener", currentTab.id);
+                        const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+                        handleSearch(fakeEvent, currentTab.id);
+                      }
+                    }}>
+                      <div className="flex items-center gap-3">
+                        <Activity className="h-5 w-5 text-primary" />
+                        <div>
+                          <h3 className="font-medium">DEX Analytics</h3>
+                          <p className="text-xs text-muted-foreground">Real-time DEX trading data</p>
+                        </div>
+                      </div>
+                    </Card>
+
+                    <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => {
+                      if (currentTab?.id) {
+                        handleSearchInputChange("blockchain explorer etherscan", currentTab.id);
+                        const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+                        handleSearch(fakeEvent, currentTab.id);
+                      }
+                    }}>
+                      <div className="flex items-center gap-3">
+                        <Search className="h-5 w-5 text-primary" />
+                        <div>
+                          <h3 className="font-medium">Block Explorers</h3>
+                          <p className="text-xs text-muted-foreground">Transaction and contract data</p>
+                        </div>
+                      </div>
+                    </Card>
+
+                    <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => {
+                      if (currentTab?.id) {
+                        handleSearchInputChange("defi yield calculator apy.vision", currentTab.id);
+                        const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+                        handleSearch(fakeEvent, currentTab.id);
+                      }
+                    }}>
+                      <div className="flex items-center gap-3">
+                        <Calculator className="h-5 w-5 text-primary" />
+                        <div>
+                          <h3 className="font-medium">DeFi Tools</h3>
+                          <p className="text-xs text-muted-foreground">Yield calculators and analytics</p>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+
+                  {/* iFrame Tips */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground">iFrame Search Tips:</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-primary" />
+                        <span>Only shows embeddable websites</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Maximize2 className="h-4 w-4 text-primary" />
+                        <span>Sites open directly in the tab</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ExternalLink className="h-4 w-4 text-primary" />
+                        <span>Non-embeddable sites open in new window</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Lock className="h-4 w-4 text-primary" />
+                        <span>Some sites may be restricted</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {currentTab?.type === 'themes' && (
@@ -909,6 +1117,6 @@ export function CryptoChart() {
           </div>
         </DialogContent>
       </Dialog>
-    </Card>
+    </div>
   );
 } 
