@@ -19,7 +19,9 @@ import { GMStreak } from "./widgets/GMStreak";
 import { LeftPanelFooter } from "./widgets/LeftPanelFooter";
 import { cn } from "../lib/utils";
 import { useNotifications } from "@/contexts/NotificationContext";
-import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { Button } from "./ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 const Dashboard = () => {
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
@@ -143,6 +145,12 @@ const Dashboard = () => {
           <div className="flex-1">
             <SocialFeeds />
           </div>
+          <LeftPanelFooter
+            onSettingsClick={handleSettingsClick}
+            onThemeToggle={() => setIsDarkMode(!isDarkMode)}
+            isDarkMode={isDarkMode}
+            onThemesClick={handleThemesClick}
+          />
         </div>
       </ResizablePanel>
 
@@ -176,33 +184,122 @@ const Dashboard = () => {
               <Clock />
               <div className="flex items-center gap-2">
                 {/* Notifications Button */}
-                <div className="relative group/notifications">
-                  <button 
-                    className="flex items-center gap-1.5 hover:bg-accent/50 transition-colors rounded-md px-1.5 py-1"
-                    onClick={() => setShowNotifications(!showNotifications)}
-                  >
-                    {unreadCount > 0 ? (
-                      <div className="relative">
-                        <Bell className="h-4 w-4 text-primary" />
-                        <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 flex items-center justify-center">
-                          <span className="text-[10px] text-white font-medium">{unreadCount}</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button 
+                      className="flex items-center gap-1.5 hover:bg-accent/50 transition-colors rounded-md px-1.5 py-1"
+                    >
+                      {unreadCount > 0 ? (
+                        <div className="relative">
+                          <Bell className="h-4 w-4 text-primary" />
+                          <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 flex items-center justify-center">
+                            <span className="text-[10px] text-white font-medium">{unreadCount}</span>
+                          </div>
                         </div>
+                      ) : (
+                        <BellOff className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80" align="end">
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b">
+                      <h4 className="font-medium">Notifications</h4>
+                      <div className="flex items-center gap-2">
+                        {notifications.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs"
+                            onClick={clearNotifications}
+                          >
+                            Clear all
+                          </Button>
+                        )}
+                        {unreadCount > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs"
+                            onClick={markAllAsRead}
+                          >
+                            Mark all read
+                          </Button>
+                        )}
                       </div>
-                    ) : (
-                      <BellOff className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </button>
-                </div>
+                    </div>
+                    <ScrollArea className="max-h-[300px]">
+                      {notifications.length === 0 ? (
+                        <div className="text-center py-6 text-muted-foreground">
+                          <p className="text-sm">No notifications</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {notifications.map((notification) => (
+                            <div
+                              key={notification.id}
+                              className={cn(
+                                "flex items-start gap-2 p-2 rounded-lg transition-colors",
+                                !notification.isRead && "bg-accent/50"
+                              )}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm">{notification.message}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {notification.timestamp}
+                                </p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                onClick={() => removeNotification(notification.id)}
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
 
                 {/* Profile Button */}
-                <div className="relative group/profile">
-                  <button className="flex items-center gap-1.5 hover:bg-accent/50 transition-colors rounded-md px-1.5 py-1">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/90 to-primary/50 flex items-center justify-center text-primary-foreground font-medium text-xs">
-                      NN
-                    </div>
-                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                  </button>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-1.5 hover:bg-accent/50 transition-colors rounded-md px-1.5 py-1">
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/90 to-primary/50 flex items-center justify-center text-primary-foreground font-medium text-xs">
+                        NN
+                      </div>
+                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Wallet className="mr-2 h-4 w-4" />
+                      <span>Wallet</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <History className="mr-2 h-4 w-4" />
+                      <span>History</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-red-500 focus:text-red-500">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
