@@ -30,8 +30,8 @@ const Dashboard = () => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem('theme');
-      return savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
     }
     return false;
   });
@@ -115,7 +115,7 @@ const Dashboard = () => {
     <div ref={dashboardRef} className="flex h-screen overflow-hidden bg-background">
       {/* Left Panel - Social Media */}
       <ResizablePanel
-        defaultSize={250}
+        defaultSize={270}
         minSize={260}
         maxSize={400}
         side="left"
@@ -129,10 +129,17 @@ const Dashboard = () => {
               rel="noopener noreferrer"
               className="block hover:opacity-80 transition-opacity"
             >
-              <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#9945FF] to-[#14F195] tracking-tight flex items-center gap-3">
+              <div className="flex flex-col items-center text-center">
+                <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#9945FF] to-[#14F195] tracking-tight flex items-center gap-3 whitespace-nowrap">
                 n_nubs
-                <Hand className="h-8 w-8 text-[#14F195] animate-wave" />
+                  <Hand className="h-8 w-8 text-[#14F195] animate-wave flex-shrink-0" />
               </h2>
+                <div className="flex items-center gap-2 mt-1 w-full">
+                  <div className="h-px flex-1 bg-gradient-to-r from-[#9945FF]/50 to-[#14F195]/50" />
+                  <span className="text-sm font-mono text-muted-foreground tracking-widest whitespace-nowrap px-2">TERMINAL</span>
+                  <div className="h-px flex-1 bg-gradient-to-r from-[#14F195]/50 to-[#9945FF]/50" />
+                </div>
+              </div>
             </a>
             <div className="space-y-3">
               <a href="#" className="flex items-center gap-2 text-base text-muted-foreground hover:text-foreground transition-colors">
@@ -143,31 +150,30 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="flex-1">
-            <SocialFeeds />
-          </div>
-          <LeftPanelFooter
+            <SocialFeeds 
             onSettingsClick={handleSettingsClick}
             onThemeToggle={() => setIsDarkMode(!isDarkMode)}
             isDarkMode={isDarkMode}
-            onThemesClick={handleThemesClick}
+              onThemesClick={handleThemesClick}
           />
+          </div>
         </div>
       </ResizablePanel>
 
       {/* Center Area */}
       <div className="flex-1 flex flex-col min-w-0">
         <div className="flex-1">
-          <CryptoChart />
+              <CryptoChart />
         </div>
-        <ResizablePanel
-          direction="vertical"
-          defaultSize={200}
-          minSize={55}
-          maxSize={500}
+          <ResizablePanel
+            direction="vertical"
+            defaultSize={200}
+            minSize={55}
+          maxSize={440}
           className="border-t border-border"
-        >
-          <ChatPanel />
-        </ResizablePanel>
+          >
+              <ChatPanel />
+          </ResizablePanel>
       </div>
 
       {/* Right Panel - AI Assistant & Clock */}
@@ -398,47 +404,47 @@ const Dashboard = () => {
 
       {/* Floating Windows */}
       {showCalculator && (
-        <Window
-          title="Calculator"
-          isOpen={showCalculator}
-          onClose={() => setShowCalculator(false)}
-          defaultPosition={{ x: 100, y: 100 }}
-          defaultSize={{ width: 300, height: 400 }}
-        >
-          <Calculator />
-        </Window>
+      <Window
+        title="Calculator"
+        isOpen={showCalculator}
+        onClose={() => setShowCalculator(false)}
+        defaultPosition={{ x: 100, y: 100 }}
+        defaultSize={{ width: 300, height: 400 }}
+      >
+        <Calculator />
+      </Window>
       )}
 
       {showMediaPlayer && (
-        <Window
-          title="Media Player"
-          isOpen={showMediaPlayer}
-          onClose={() => setShowMediaPlayer(false)}
-          defaultPosition={{ x: 150, y: 150 }}
-          defaultSize={{ width: 500, height: 400 }}
-        >
-          <MediaPlayer />
-        </Window>
+      <Window
+        title="Media Player"
+        isOpen={showMediaPlayer}
+        onClose={() => setShowMediaPlayer(false)}
+        defaultPosition={{ x: 150, y: 150 }}
+        defaultSize={{ width: 500, height: 400 }}
+      >
+        <MediaPlayer />
+      </Window>
       )}
 
       {showCalendar && (
-        <Window
-          title="Calendar"
-          isOpen={showCalendar}
-          onClose={() => setShowCalendar(false)}
-          defaultPosition={{ x: 200, y: 200 }}
-          defaultSize={{ width: 600, height: 500 }}
-        >
-          <DailyJournal />
-        </Window>
+      <Window
+        title="Calendar"
+        isOpen={showCalendar}
+        onClose={() => setShowCalendar(false)}
+        defaultPosition={{ x: 200, y: 200 }}
+        defaultSize={{ width: 600, height: 500 }}
+      >
+        <DailyJournal />
+      </Window>
       )}
 
       {/* Keyboard Shortcuts Dialog */}
       {showKeyboardShortcuts && (
-        <KeyboardShortcuts
-          open={showKeyboardShortcuts}
-          onOpenChange={setShowKeyboardShortcuts}
-        />
+      <KeyboardShortcuts
+        open={showKeyboardShortcuts}
+        onOpenChange={setShowKeyboardShortcuts}
+      />
       )}
     </div>
   );

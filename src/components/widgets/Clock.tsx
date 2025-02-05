@@ -19,7 +19,7 @@ export function Clock() {
         {hour12.toString().padStart(2, '0')}
         <span className="text-primary/70 mx-px">:</span>
         {minutes.toString().padStart(2, '0')}
-      </div>
+          </div>
       <div className="text-[10px] font-medium text-muted-foreground">
         {period}
       </div>

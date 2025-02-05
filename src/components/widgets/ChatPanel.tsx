@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/ScrollArea";
-import { Send, Lock, MessageSquare, Users, ArrowLeftRight, Reply, Heart, Share2 } from "lucide-react";
+import { Send, Lock, MessageSquare, Users, ArrowLeftRight, Reply, Heart, Share2, Bot } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface Message {
   id: number;
@@ -106,7 +107,7 @@ export function ChatPanel() {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                      onClick={() => console.log('Reply to:', message.id)}
+                      disabled
                     >
                       <Reply className="h-3.5 w-3.5" />
                     </Button>
@@ -114,7 +115,7 @@ export function ChatPanel() {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                      onClick={() => console.log('React to:', message.id)}
+                      disabled
                     >
                       <Heart className="h-3.5 w-3.5" />
                     </Button>
@@ -122,7 +123,7 @@ export function ChatPanel() {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                      onClick={() => console.log('Share:', message.id)}
+                      disabled
                     >
                       <Share2 className="h-3.5 w-3.5" />
                     </Button>
@@ -155,46 +156,37 @@ export function ChatPanel() {
                 <Lock className="h-4 w-4 text-muted-foreground" />
               </div>
             </div>
+            <div className="mt-2 text-xs text-center text-muted-foreground">
+              <div className="inline-flex items-center gap-1.5 bg-primary/10 px-2 py-1 rounded-full">
+                <Bot className="h-3.5 w-3.5 text-primary" />
+                <span className="text-primary">Coming Soon</span>
+              </div>
+            </div>
           </div>
         </>
       ) : mode === "private" ? (
         <div className="flex-1 flex items-center justify-center flex-col gap-3 p-4 text-center">
-          <Users className="h-12 w-12 text-muted-foreground" />
-          <h3 className="font-medium">Private Chat Coming Soon</h3>
+          <Users className="h-12 w-12 text-primary" />
+          <div className="bg-primary/10 px-3 py-1.5 rounded-full">
+            <span className="text-sm font-medium bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent">
+              Coming Soon
+            </span>
+          </div>
           <p className="text-sm text-muted-foreground max-w-[280px]">
             Create private groups or DM other traders securely. Share invite links to bring your trading friends.
           </p>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center gap-8 p-4">
-          <div className="flex flex-col gap-3 text-center max-w-[280px]">
-            <ArrowLeftRight className="h-12 w-12 text-muted-foreground mx-auto" />
-            <h3 className="font-medium">Solana Token Swap Coming Soon</h3>
-            <p className="text-sm text-muted-foreground">
-              Swap Solana tokens instantly with the best rates from Jupiter aggregator. Support for SPL tokens and popular Solana DeFi protocols.
-            </p>
+        <div className="flex-1 flex items-center justify-center flex-col gap-3 p-4 text-center">
+          <ArrowLeftRight className="h-12 w-12 text-primary" />
+          <div className="bg-primary/10 px-3 py-1.5 rounded-full">
+            <span className="text-sm font-medium bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent">
+              Coming Soon
+            </span>
           </div>
-          <div className="w-full max-w-sm p-4 rounded-lg border border-border bg-muted/50">
-            <div className="space-y-4">
-              <div className="rounded-lg bg-background p-3">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">From</span>
-                  <span className="text-muted-foreground">Balance: 0.00</span>
-                </div>
-                <Input disabled placeholder="0.0" className="border-0 bg-transparent text-lg p-0 h-auto" />
-              </div>
-              <div className="rounded-lg bg-background p-3">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">To</span>
-                  <span className="text-muted-foreground">Balance: 0.00</span>
-                </div>
-                <Input disabled placeholder="0.0" className="border-0 bg-transparent text-lg p-0 h-auto" />
-              </div>
-              <Button className="w-full" disabled>
-                Connect Wallet
-              </Button>
-            </div>
-          </div>
+          <p className="text-sm text-muted-foreground max-w-[280px]">
+            Swap Solana tokens instantly with the best rates from Jupiter aggregator. Support for SPL tokens and popular Solana DeFi protocols.
+          </p>
         </div>
       )}
     </div>
