@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/ScrollArea";
 import { Send, Lock, Bot, MessageSquare, Terminal, Github, Twitter } from "lucide-react";
 import { useState } from "react";
+import { ChatV2 } from "./ChatV2";
 
 interface Message {
   id: number;
@@ -38,7 +39,35 @@ const demoMessages: Message[] = [
   }
 ];
 
-type Mode = "chat" | "agent";
+type Mode = "chat" | "agent" | "chatv2";
+
+function Footer() {
+  return (
+    <div className="px-4 py-2 border-t border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>© 2025 n_nubs. All rights reserved.</span>
+        <div className="flex items-center gap-3">
+          <a
+            href="https://github.com/NubsCarson/n_nubs"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-foreground transition-colors"
+          >
+            <Github className="h-4 w-4" />
+          </a>
+          <a
+            href="https://x.com/monerosolana"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-foreground transition-colors"
+          >
+            <Twitter className="h-4 w-4" />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function AIChatPanel() {
   const [mode, setMode] = useState<Mode>("chat");
@@ -65,6 +94,15 @@ export function AIChatPanel() {
           >
             <Terminal className="h-4 w-4" />
             Agent
+          </Button>
+          <Button
+            variant={mode === "chatv2" ? "secondary" : "ghost"}
+            size="sm"
+            className="flex-1 gap-2"
+            onClick={() => setMode("chatv2")}
+          >
+            <Send className="h-4 w-4" />
+            ChatV2
           </Button>
         </div>
       </div>
@@ -119,39 +157,28 @@ export function AIChatPanel() {
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="px-4 py-2 border-t border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>© 2025 n_nubs. All rights reserved.</span>
-                <div className="flex items-center gap-3">
-                  <a
-                    href="https://github.com/NubsCarson/n_nubs"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    <Github className="h-4 w-4" />
-                  </a>
-                  <a
-                    href="https://twitter.com/n_nubsDEV"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    <Twitter className="h-4 w-4" />
-                  </a>
-                </div>
-              </div>
-            </div>
+            <Footer />
           </div>
         </>
+      ) : mode === "agent" ? (
+        <div className="flex flex-col h-full">
+          <div className="flex-1 flex items-center justify-center flex-col gap-3 p-4 text-center">
+            <Terminal className="h-12 w-12 text-muted-foreground" />
+            <h3 className="font-medium">AI Agent Coming Soon</h3>
+            <p className="text-sm text-muted-foreground max-w-[280px]">
+              The AI Agent will help automate your trading tasks and provide real-time market analysis.
+            </p>
+          </div>
+          <Footer />
+        </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center flex-col gap-3 p-4 text-center">
-          <Terminal className="h-12 w-12 text-muted-foreground" />
-          <h3 className="font-medium">AI Agent Coming Soon</h3>
-          <p className="text-sm text-muted-foreground max-w-[280px]">
-            The AI Agent will help automate your trading tasks and provide real-time market analysis.
-          </p>
+        <div className="flex flex-col h-full">
+          <div className="flex-1 min-h-0 relative">
+            <div className="absolute inset-0">
+              <ChatV2 />
+            </div>
+          </div>
+          <Footer />
         </div>
       )}
     </div>

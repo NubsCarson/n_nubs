@@ -1,7 +1,7 @@
 /** @jsxRuntime classic */
 /** @jsx React.createElement */
 /** @jsxFrag React.Fragment */
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef, createContext, useContext } from "react";
 import { Clock } from "./widgets/Clock";
 import { Calculator } from "./widgets/Calculator";
 import { MediaPlayer } from "./widgets/MediaPlayer";
@@ -22,6 +22,13 @@ import { useNotifications } from "@/contexts/NotificationContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { ChatV2 } from "./widgets/ChatV2";
+
+// Create a context for stats visibility
+export const StatsVisibilityContext = createContext({
+  isStatsVisible: true,
+  toggleStats: () => {},
+});
 
 const Dashboard = () => {
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
@@ -51,6 +58,8 @@ const Dashboard = () => {
   const dashboardRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const [isStatsVisible, setIsStatsVisible] = useState(true);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDarkMode);
@@ -111,11 +120,16 @@ const Dashboard = () => {
     }
   }, []);
 
+  const toggleStats = useCallback(() => {
+    setIsStatsVisible(prev => !prev);
+  }, []);
+
   return (
-    <div ref={dashboardRef} className="flex h-screen overflow-hidden bg-background">
+    <StatsVisibilityContext.Provider value={{ isStatsVisible, toggleStats }}>
+      <div ref={dashboardRef} className="flex h-screen overflow-hidden bg-background">
       {/* Left Panel - Social Media */}
       <ResizablePanel
-        defaultSize={270}
+          defaultSize={270}
         minSize={260}
         maxSize={400}
         side="left"
@@ -124,54 +138,56 @@ const Dashboard = () => {
         <div className="h-full flex flex-col">
           <div className="p-6 flex-shrink-0 border-b border-border space-y-4">
             <a 
-              href="https://x.com/n_nubsDEV" 
+              href="https://x.com/monerosolana" 
               target="_blank" 
               rel="noopener noreferrer"
               className="block hover:opacity-80 transition-opacity"
             >
-              <div className="flex flex-col items-center text-center">
-                <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#9945FF] to-[#14F195] tracking-tight flex items-center gap-3 whitespace-nowrap">
-                  n_nubs
-                  <Hand className="h-8 w-8 text-[#14F195] animate-wave flex-shrink-0" />
-                </h2>
-                <div className="flex items-center gap-2 mt-1 w-full">
-                  <div className="h-px flex-1 bg-gradient-to-r from-[#9945FF]/50 to-[#14F195]/50" />
-                  <div className="flex items-center gap-1">
-                    <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-sm font-mono text-muted-foreground tracking-widest whitespace-nowrap">TERMINAL</span>
+                <div className="flex flex-col items-center text-center">
+                  <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#9945FF] to-[#14F195] tracking-tight flex items-center gap-3 whitespace-nowrap">
+                n_nubs
+                    <Hand className="h-8 w-8 text-[#14F195] animate-wave flex-shrink-0" />
+              </h2>
+                  <div className="flex items-center gap-2 mt-1 w-full">
+                    <div className="h-px flex-1 bg-gradient-to-r from-[#9945FF]/50 to-[#14F195]/50" />
+                    <div className="flex items-center gap-1">
+                      <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-sm font-mono text-muted-foreground tracking-widest whitespace-nowrap">TERMINAL</span>
+                    </div>
+                    <div className="h-px flex-1 bg-gradient-to-r from-[#14F195]/50 to-[#9945FF]/50" />
                   </div>
-                  <div className="h-px flex-1 bg-gradient-to-r from-[#14F195]/50 to-[#9945FF]/50" />
                 </div>
-              </div>
-            </a>
-            <div className="space-y-3">
+              </a>
+              <div className="space-y-3">
               <GMStreak />
             </div>
-          </div>
-          <div className="flex-1">
-            <SocialFeeds 
+            </div>
+            <div className="flex-1">
+              <SocialFeeds 
             onSettingsClick={handleSettingsClick}
             onThemeToggle={() => setIsDarkMode(!isDarkMode)}
             isDarkMode={isDarkMode}
-              onThemesClick={handleThemesClick}
+                onThemesClick={handleThemesClick}
           />
-          </div>
+            </div>
         </div>
       </ResizablePanel>
 
       {/* Center Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="flex-1">
+          <div className="flex-1 min-h-0">
               <CryptoChart />
-        </div>
+          </div>
           <ResizablePanel
             direction="vertical"
             defaultSize={200}
             minSize={55}
-          maxSize={430}
-          className="border-t border-border"
+            maxSize={430}
+            className="border-t border-border flex-shrink-0"
           >
+            <div className="h-full">
               <ChatPanel />
+            </div>
           </ResizablePanel>
       </div>
 
@@ -179,137 +195,141 @@ const Dashboard = () => {
       <ResizablePanel
         defaultSize={400}
         minSize={320}
-        maxSize={600}
+          maxSize={700}
         side="right"
-        className="relative border-l border-border bg-card"
+          className="relative border-l border-border bg-card"
       >
         <div className="h-full flex flex-col">
-          <div className="flex-shrink-0 border-b border-border">
-            <div className="flex items-center justify-between p-2 px-3 bg-gradient-to-r from-background to-card backdrop-blur-sm">
-              <Clock />
-              <div className="flex items-center gap-2">
-                {/* Notifications Button */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button 
-                      className="flex items-center gap-1.5 hover:bg-accent/50 transition-colors rounded-md px-1.5 py-1"
-                    >
-                      {unreadCount > 0 ? (
-                        <div className="relative">
-                          <Bell className="h-4 w-4 text-primary" />
-                          <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 flex items-center justify-center">
-                            <span className="text-[10px] text-white font-medium">{unreadCount}</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <BellOff className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80" align="end">
-                    <div className="flex items-center justify-between pb-2 mb-2 border-b">
-                      <h4 className="font-medium">Notifications</h4>
-                      <div className="flex items-center gap-2">
-                        {notifications.length > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
-                            onClick={clearNotifications}
-                          >
-                            Clear all
-                          </Button>
-                        )}
-                        {unreadCount > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
-                            onClick={markAllAsRead}
-                          >
-                            Mark all read
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                    <ScrollArea className="max-h-[300px]">
-                      {notifications.length === 0 ? (
-                        <div className="text-center py-6 text-muted-foreground">
-                          <p className="text-sm">No notifications</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {notifications.map((notification) => (
-                            <div
-                              key={notification.id}
-                              className={cn(
-                                "flex items-start gap-2 p-2 rounded-lg transition-colors",
-                                !notification.isRead && "bg-accent/50"
-                              )}
-                            >
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm">{notification.message}</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                  {notification.timestamp}
-                                </p>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                                onClick={() => removeNotification(notification.id)}
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </Button>
+            <div className="flex-shrink-0 border-b border-border">
+              <div className="flex items-center justify-between p-2 px-3 bg-gradient-to-r from-background to-card backdrop-blur-sm">
+                <Clock />
+                <div className="flex items-center gap-2">
+                  {/* Notifications Button */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button 
+                        className="flex items-center gap-1.5 hover:bg-accent/50 transition-colors rounded-md px-1.5 py-1"
+                      >
+                        {unreadCount > 0 ? (
+                          <div className="relative">
+                            <Bell className="h-4 w-4 text-primary" />
+                            <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 flex items-center justify-center">
+                              <span className="text-[10px] text-white font-medium">{unreadCount}</span>
                             </div>
-                          ))}
+                          </div>
+                        ) : (
+                          <BellOff className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80" align="end">
+                      <div className="flex items-center justify-between pb-2 mb-2 border-b">
+                        <h4 className="font-medium">Notifications</h4>
+                        <div className="flex items-center gap-2">
+                          {notifications.length > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={clearNotifications}
+                            >
+                              Clear all
+                            </Button>
+                          )}
+                          {unreadCount > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={markAllAsRead}
+                            >
+                              Mark all read
+                            </Button>
+                          )}
                         </div>
-                      )}
-                    </ScrollArea>
-                  </PopoverContent>
-                </Popover>
-
-                {/* Profile Button */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-1.5 hover:bg-accent/50 transition-colors rounded-md px-1.5 py-1">
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/90 to-primary/50 flex items-center justify-center text-primary-foreground font-medium text-xs">
-                        NN
                       </div>
-                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Wallet className="mr-2 h-4 w-4" />
-                      <span>Wallet</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <History className="mr-2 h-4 w-4" />
-                      <span>History</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-red-500 focus:text-red-500">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      <ScrollArea className="max-h-[300px]">
+                        {notifications.length === 0 ? (
+                          <div className="text-center py-6 text-muted-foreground">
+                            <p className="text-sm">No notifications</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {notifications.map((notification) => (
+                              <div
+                                key={notification.id}
+                                className={cn(
+                                  "flex items-start gap-2 p-2 rounded-lg transition-colors",
+                                  !notification.isRead && "bg-accent/50"
+                                )}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm">{notification.message}</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    {notification.timestamp}
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                  onClick={() => removeNotification(notification.id)}
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </ScrollArea>
+                    </PopoverContent>
+                  </Popover>
+
+                  {/* Profile Button */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center gap-1.5 hover:bg-accent/50 transition-colors rounded-md px-1.5 py-1">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/90 to-primary/50 flex items-center justify-center text-primary-foreground font-medium text-xs">
+                          NN
+                        </div>
+                        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Wallet className="mr-2 h-4 w-4" />
+                        <span>Wallet</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <History className="mr-2 h-4 w-4" />
+                        <span>History</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-red-500 focus:text-red-500">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log out</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </div>
 
             {/* Stats Section */}
-            <div className="px-3 py-2 border-t border-border/10">
+            <div className={cn(
+              "flex-shrink-0 border-b border-border transition-all duration-300",
+              !isStatsVisible && "hidden"
+            )}>
               {/* Trading Score */}
               <div className="relative p-2 rounded-lg bg-gradient-to-r from-emerald-500/5 via-emerald-500/[0.02] to-transparent border border-emerald-500/10">
                 <div className="flex items-center gap-2">
@@ -320,7 +340,7 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
                       <div className="text-sm font-medium text-emerald-500">Trading Score</div>
                       <div className="text-xs text-emerald-500/70">Level 4</div>
                     </div>
@@ -389,20 +409,21 @@ const Dashboard = () => {
                         className="h-full bg-gradient-to-r from-primary/80 to-primary rounded-full transition-all duration-500 ease-out"
                         style={{ width: '85%' }}
                       />
-                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
           <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex-1">
             <AIChatPanel />
+              </div>
           </div>
         </div>
       </ResizablePanel>
 
       {/* Floating Windows */}
-      {showCalculator && (
+        {showCalculator && (
       <Window
         title="Calculator"
         isOpen={showCalculator}
@@ -412,9 +433,9 @@ const Dashboard = () => {
       >
         <Calculator />
       </Window>
-      )}
+        )}
 
-      {showMediaPlayer && (
+        {showMediaPlayer && (
       <Window
         title="Media Player"
         isOpen={showMediaPlayer}
@@ -424,9 +445,9 @@ const Dashboard = () => {
       >
         <MediaPlayer />
       </Window>
-      )}
+        )}
 
-      {showCalendar && (
+        {showCalendar && (
       <Window
         title="Calendar"
         isOpen={showCalendar}
@@ -436,16 +457,17 @@ const Dashboard = () => {
       >
         <DailyJournal />
       </Window>
-      )}
+        )}
 
-      {/* Keyboard Shortcuts Dialog */}
-      {showKeyboardShortcuts && (
+        {/* Keyboard Shortcuts Dialog */}
+        {showKeyboardShortcuts && (
       <KeyboardShortcuts
         open={showKeyboardShortcuts}
         onOpenChange={setShowKeyboardShortcuts}
       />
-      )}
+        )}
     </div>
+    </StatsVisibilityContext.Provider>
   );
 };
 
